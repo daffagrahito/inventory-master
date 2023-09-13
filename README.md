@@ -177,3 +177,16 @@ Perbedaan utama antara ketiganya yaitu :
     - View dengan controller berelasi many to many
     - View dan template berelasi one to one
     - View dan ViewModel berelasi one to many
+
+## Implementasi Test Lain selain di Tutorial pada `tests.py`
+Pada `tests.py` milik saya terdapat sebuah test function yang mengecek apakah value *name* dan *class* te*render* dengan benar di HTML, pengecekan dilakukan dengan mengecek apakah value dari variable *name* dan *class* di test sama dengan name saat di*render* yaitu berisi nama panjang saya dan kelas PBP saya.
+```py
+def test_name_and_class_are_set_correctly_in_main_template(self):
+        name = "Muhammad Daffa Grahito Triharsanto"
+        class_name = "PBP A"
+
+        response = Client().get('/main/', {'name': name, 'class': class_name})
+
+        self.assertContains(response, name)
+        self.assertContains(response, class_name)
+``` 
