@@ -156,7 +156,7 @@ Lalu perlu juga dibuat template baru dengan membuat file HTML baru bernama `crea
 
 {% endblock %}
 ``` 
-Lalu pada `main.html`, tambahkan tabel data item dan tombol dengan menambahkan kode berikut di dalam `block content`:
+Lalu pada `main.html`, tambahkan tabel data item dan tombol dengan menambahkan kode berikut di dalam `block content` untuk menambahkan detail data dan tombol untuk input `form` nya:
 ```html
 ...
 <table>
@@ -188,6 +188,8 @@ Lalu pada `main.html`, tambahkan tabel data item dan tombol dengan menambahkan k
     </a>
 ...
 ```
+Dengan begitu, HTML akan di *render* oleh fungsi `show_main` sebelumnya lalu menampilkan sebuah web page dalam bentuk HTML
+
 2. **Format XML**
 
 Tambahkan sebuah fungsi bernama `show_xml` agar saat kita mengakses URL yang terkait dengan `view` `show_xml`, kita akan mendapatkan respons dalam format XML yang berisi data dari model `Item`. Adapun isi dari fungsi `show_xml` adalah:
