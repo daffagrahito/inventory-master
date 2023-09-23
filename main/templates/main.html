@@ -1,7 +1,44 @@
-<center><h1>{{ app_name }}</h1></center>
+{% extends 'base.html' %}
 
-<center><h4>An inventory to manage inventories</h5></center>
-<hr>
+{% block content %}
+    <center><h1>{{ app_name }}</h1>
 
-<p><b>Name:</b> {{ name }}</p>
-<p><b>Class:</b> {{ class }}</p>
+    <h4>An inventory to manage inventories</h4>
+    <hr>
+
+    <p><b>Name:</b> {{ name }}</p>
+    <p><b>Class:</b> {{ class }}</p>
+
+    <hr>
+
+    <p>Terdapat {{ total_items }} inventory yang telah dimasukkan</p>
+    
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Date Added</th>
+            <th>Category</th>
+        </tr>
+    
+        {% for item in items %}
+            <tr>
+                <td>{{item.name}}</td>
+                <td>{{item.amount}}</td>
+                <td>{{item.description}}</td>
+                <td>{{item.date_added}}</td>
+                <td>{{item.category}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <br />
+    
+    <a href="{% url 'main:create_item' %}">
+        <button>
+            Add New Item
+        </button>
+    </a>
+    </center>
+{% endblock content %}

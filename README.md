@@ -1,5 +1,331 @@
 # Inventory Master
 
+### Tugas 3 - Pemrograman Berbasis Platform
+
+`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
+<br><hr>
+
+## Mengatur Routing dari `main/` ke`/`
+Supaya lebih mengikuti aturan umum yang digunakan dalam pengaturan rute URL di *web application* ini, akan diubah routing yang sebelumnya dari *`main/`* ke *`/`* (root).
+
+Perlu diubah `urls.py` yang ada pada subdirektori inventory_master menjadi seperti ini:
+```py
+...
+urlpatterns = [
+    path('', include('main.urls')),
+    path('admin/', admin.site.urls),
+]
+```
+
+## Membuat kerangka dari `views` menggunakan `skeleton`
+Kerangka views dengan skeleton (*base template*) diperlukan untuk menjaga konsistensi desain antara halaman web dalam project, memperkecil kemungkinan *code redudancy*, memisahkan logika dari tampilan, dan memungkinkan perubahan desain global dengan mudah.
+
+Perlu dibuat folder `templates` pada root folder dan di isi dengan suatu file HTML yang baru bernama `base.html` sebagai template dasar. Isi dari base.html adalah:
+```html
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        {% block meta %}
+        {% endblock meta %}
+    </head>
+
+    <body>
+        {% block content %}
+        {% endblock content %}
+    </body>
+</html>
+```
+Lalu pada `settings.py` yang ada dalam subdirektori inventory_master, ubah di bagian list `TEMPLATES` tepatnya di `DIRS` agar `base.html` terdeteksi sebagai suatu template.
+```py
+...
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'], # Kode ini ditambahkan menjadi seperti ini
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ]
+        }
+    }
+]
+...
+
+```
+Lalu pada `templates` yang ada di direktori `main`, `main.html` akan diubah supaya kita menggunakan `base.html` yang ada di direktori `templates` pada root folder menjadi template utamanya
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+    <center><h1>{{ app_name }}</h1>
+
+    <h4>An inventory to manage inventories</h4>
+    <hr>
+
+    <p><b>Name:</b> {{ name }}</p>
+    <p><b>Class:</b> {{ class }}</p>
+
+    <hr></center>
+{% endblock content %}
+```
+
+## Implementasi Cara Kerja *Data Delivery*
+- ### Membuat input `form`
+Input `form` digunakan untuk menginput data baru di aplikasi sehingga nantinya data baru tersebut bisa di tampilkan di halaman utama
+
+Pada direktori `main` buat file baru yaitu `forms.py` yang berisi kode:
+```py
+from django.forms import ModelForm
+from main.models import Item
+
+class ItemForm(ModelForm):
+    class Meta:
+        model = Item
+        fields = ["name", "amount", "description", "category"]
+```
+Lalu pada `views.py`, fungsi `show_main` di ubah menjadi seperti ini:
+```py
+...
+from main.models import Item
+...
+def show_main(request):
+    items = Item.objects.all()
+
+    context = {
+        'app_name': "daffagrahito's Inventory Master",
+        'name': 'Muhammad Daffa Grahito Triharsanto',
+        'class': 'PBP A',
+        'items': items,
+    }
+
+    return render(request, "main.html", context)
+```
+
+- ### Membuat fungsi-fungsi baru pada `views`
+Terdapat lima fungsi yang di tambahkan pada `views` agar kita bisa melihat data yang telah kita input pada `form`
+1. **Format HTML**,
+
+Agar kita bisa mendapatkan input data, kita membuat fungsi `create_item` di dalam `views.py`. Kode dari fungsi `create_item` adalah sebagai berikut:
+```py
+...
+# Untuk import bisa disesuaikan
+from django.shortcuts import render
+from main.forms import ItemForm
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+...
+def create_item(request):
+    form = ItemForm(request.POST or None)
+
+    if form.is_valid() and request.method == "POST":
+        form.save()
+        return HttpResponseRedirect(reverse('main:show_main'))
+
+    context = {'form': form}
+    return render(request, "create_item.html", context)
+```
+Lalu perlu juga dibuat template baru dengan membuat file HTML baru bernama `create_item` di dalam direktori `templates` yang terletak di direktori aplikasi `main`. Adapun isi dari `create_item.html` adalah sebagai berikut:
+```html
+{% extends 'base.html' %} 
+
+{% block content %}
+<h1>Add New Item</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    <table>
+        {{ form.as_table }}
+        <tr>
+            <td></td>
+            <td>
+                <input type="submit" value="Add Item"/>
+            </td>
+        </tr>
+    </table>
+</form>
+
+{% endblock %}
+``` 
+Lalu pada `main.html`, tambahkan tabel data item dan tombol dengan menambahkan kode berikut di dalam `block content` untuk menambahkan detail data dan tombol untuk input `form` nya:
+```html
+...
+<table>
+        <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Date Added</th>
+            <th>Category</th>
+        </tr>
+    
+        {% for item in items %}
+            <tr>
+                <td>{{item.name}}</td>
+                <td>{{item.amount}}</td>
+                <td>{{item.description}}</td>
+                <td>{{item.date_added}}</td>
+                <td>{{item.category}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <br />
+    
+    <a href="{% url 'main:create_item' %}">
+        <button>
+            Add New Item
+        </button>
+    </a>
+...
+```
+Dengan begitu, HTML akan di *render* oleh fungsi `show_main` sebelumnya lalu menampilkan sebuah web page dalam bentuk HTML
+
+2. **Format XML**
+
+Tambahkan sebuah fungsi bernama `show_xml` agar saat kita mengakses URL yang terkait dengan `view` `show_xml`, kita akan mendapatkan respons dalam format XML yang berisi data dari model `Item`. Adapun isi dari fungsi `show_xml` adalah:
+```py
+# Untuk import bisa disesuaikan
+from main.models import Item
+from django.http import HttpResponse
+from django.core import serializers
+
+def show_xml(request):
+    data = Item.objects.all()
+    return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
+```
+
+3. **Format JSON**
+
+Tambahkan sebuah fungsi bernama `show_json` agar saat kita mengakses URL yang terkait dengan `view` `show_json`, kita akan mendapatkan respons dalam format JSON yang berisi data dari model `Item`. Adapun isi dari fungsi `show_json` adalah sebagai berikut:
+```py
+# Untuk import bisa disesuaikan
+from main.models import Item
+from django.http import HttpResponse
+from django.core import serializers
+
+def show_json(request):
+    data = Item.objects.all()
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+```
+
+4. **Format XML *by* ID**
+
+Tambahkan sebuah fungsi bernama `show_xml_by_id` yang bertujuan untuk mengambil objek dari model Item berdasarkan ID yang diberikan (ID diteruskan sebagai parameter id dalam URL) dan mengembalikannya dalam format XML sebagai `*HTTP response*`. Adapun isi dari fungsi `show_xml_by_id` adalah sebagai berikut:
+```py
+# Untuk import bisa disesuaikan
+from main.models import Item
+from django.http import HttpResponse
+from django.core import serializers
+
+def show_xml_by_id(request, id):
+    data = Item.objects.filter(pk=id)
+    return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
+```
+
+5. **Format JSON *by* ID**
+
+Tambahkan sebuah fungsi bernama `show_json_by_id` yang bertujuan untuk mengambil objek dari model Item berdasarkan ID yang diberikan (ID diteruskan sebagai parameter id dalam URL) dan mengembalikannya dalam format JSON sebagai `*HTTP response*`. Adapun isi dari fungsi `show_json_by_id` adalah sebagai berikut:
+```py
+# Untuk import bisa disesuaikan
+from main.models import Item
+from django.http import HttpResponse
+from django.core import serializers
+
+def show_json_by_id(request, id):
+    data = Item.objects.filter(pk=id)
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+```
+
+- ## Membuat *routing* URL untuk masing-masing `views`
+Agar *web application* dapat menentukan bagaimana merespons permintaan dari pengguna berdasarkan URL yang mereka akses, setiap URL akan dihubungkan dengan view dari masing-masing fungsi yang sesuai. Untuk itu perlu ditambahkan semua *path url*nya ke dalam `urls.py` yang ada di direktori `main`. `urls.py` diubah menjadi seperti ini:
+```py
+from django.urls import path
+from main.views import show_main, create_item, show_xml, show_json, show_xml_by_id, show_json_by_id # Import semua function dari views
+
+app_name = 'main'
+
+urlpatterns = [
+    path('', show_main, name='show_main'),
+    path('create-item', create_item, name='create_item'),
+    path('xml/', show_xml, name='show_xml'),
+    path('json/', show_json, name='show_json'),
+    path('xml/<int:id>/', show_xml_by_id, name='show_xml_by_id'),
+    path('json/<int:id>/', show_json_by_id, name='show_json_by_id'), 
+]
+```
+Lalu, aktifkan `Virtual Environment` di command prompt dan jalankan command `python manage.py runserver`. Setelah itu kunjungi [http://localhost:8000/](http://localhost:8000/). 
+Dengan mengakses masing-masing *route* URL yang kita mau, data yang sesuai akan ditampilkan di *web page*.
+
+## Screenshot Akses URL dengan Postman
+
+### 1. Format HTML
+![HTML](https://cdn.discordapp.com/attachments/1152952874037428306/1153518855474380890/image.png)
+### 2. Format XML
+![XML](https://cdn.discordapp.com/attachments/1152952874037428306/1153518949498114140/image.png)
+### 3. Format JSON
+![JSON](https://cdn.discordapp.com/attachments/1152952874037428306/1153519069585227897/image.png)
+### 4. Format XML *by* ID
+![XML by ID](https://cdn.discordapp.com/attachments/1152952874037428306/1153519237839736832/image.png)
+### 5. Format HTML *by* ID
+![JSON by ID](https://cdn.discordapp.com/attachments/1152952874037428306/1153519140305375342/image.png)
+
+## Apa perbedaan antara form `POST` dan form `GET` dalam Django?
+Jadi, `Form` digunakan untuk menerima input data dari *user* dengan memasukkan text, memilih opsi, manipulasi *object* dan *controls*, dan lain sebagainya. Adapun terdapat dua *HTTP methods* yaitu `POST` dan `GET`, perbedaan antara keduanya adalah:
+- `POST` digunakan untuk mengirim data (file, form data, dan lain lain) ke server untuk diproses, sedangkan `GET` digunakan untuk mengambil data dari server.
+- Dengan `POST` jika data berhasil dibuat/dikirim akan me-*return* *HTTP status code* 201, sedangkan dengan `GET` jika data berhasil diambil akan me-*return* *HTTP status code* 200.
+- Data `POST` lebih aman daripada data `GET`, karena tidak terlihat di URL. ini karena metode `POST` tidak menampilkan data dalam URL (data hanya dimasukkan ke dalam form dan dikirim sebagai bagian dari *HTTP request*), sementara metode `GET` menampilkan data dalam URL melalui parameter query string.
+- Batasan panjang data pada metode `POST` tidak ada batasan dan bisa kita atur sendiri, sedangkan batasan panjang data pada metode `GET` tergantung pada server web, peramban, atau pengaturan server.
+## Apa perbedaan utama antara XML, JSON, dan HTML dalam konteks pengiriman data?
+- **`XML`** digunakan untuk representasi data terstruktur.
+- **`JSON`** digunakan untuk pertukaran data ringan dan sering digunakan dalam *web development*.
+- **`HTML`** digunakan untuk membangun halaman web yang akan ditampilkan oleh browser.
+## Mengapa JSON sering digunakan dalam pertukaran data antara aplikasi web modern?
+JSON sering digunakan dalam pertukaran data antara web aplikasi modern karena sifatnya yang ringan dan mudah dibaca, memungkinkan *developers* untuk merepresentasikan data dengan fleksibel, dan dapat menanamkan struktur data. Selain itu, JSON didukung oleh hampir semua bahasa pemrograman, terintegrasi dengan baik dalam lingkungan web, terutama JavaScript, dan memiliki overhead yang kecil dalam hal ukuran file.
+
+## Implementasi Bonus
+Di dalam `views.py` di fungsi `show_main`, hitung jumlah item yang terdaftar dengan menggunakan fungsi `len()`. Implementasinya menjadi sebagai berikut:
+```py
+def show_main(request):
+    items = Item.objects.all()
+    total_items = len(items)
+
+    context = {
+        'app_name': "daffagrahito's Inventory Master",
+        'name': 'Muhammad Daffa Grahito Triharsanto',
+        'class': 'PBP A',
+        'items': items,
+        'total_items': total_items,
+    }
+
+    return render(request, "main.html", context)
+```
+Lalu ditambahkan kode berikut pada template `main.html` untuk menampilkan berapa banyak inventory yang terdaftar.
+
+```html
+...
+    <p><b>Name:</b> {{ name }}</p>
+    <p><b>Class:</b> {{ class }}</p>
+
+    <hr>
+
+    <p>Terdapat {{ total_items }} inventory yang telah dimasukkan</p> <!-- Kode ini ditambahkan-->
+    
+    <table>
+...
+```
+
+<hr><hr>
+
 ### Tugas 2 - Pemrograman Berbasis Platform
 
 `Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
