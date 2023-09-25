@@ -1,11 +1,402 @@
 # Inventory Master
 
+### Tugas 4 - Pemrograman Berbasis Platform
+
+`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
+
+> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
+
+## Mengimplementasikan fungsi *register*, *login*, dan *logout*
+- ## Membuat fungsi *register*
+Sebelum *user* dapat mengakses aplikasi kita, mereka perlu login agar data inventory mereka tidak tertukar. Sebelum login perlu ada juga register agar mereka yang belum pernah memiliki akun dapat mengakses aplikasi ini. Dalam `main/views.py`, perlu dibuat sebuah fungsi `register` yang menerima `request`. Adapun kodenya seperti ini:
+```py
+# Sesuaikan importnya
+from django.shortcuts import redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages 
+...
+def register(request):
+    form = UserCreationForm()
+
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your account has been successfully created!')
+            return redirect('main:login')
+    context = {'form':form}
+    return render(request, 'register.html', context)
+```
+Lalu buat sebuah HTML file yang bernama `register.html` di dalam `main/templates` dan nantinya fungsi `register` dalam `views.py` akan me*return* hasil *render* dari `register.html`. Isi dari `register.html` adalah:
+```html
+{% extends 'base.html' %}
+
+{% block meta %}
+    <title>Register</title>
+{% endblock meta %}
+
+{% block content %}  
+
+<div class = "login">
+    
+    <h1>Register an Account</h1>  
+
+        <form method="POST" >  
+            {% csrf_token %}  
+            <table>  
+                {{ form.as_table }}  
+                <tr>  
+                    <td></td>
+                    <td><input type="submit" name="submit" value="Daftar"/></td>  
+                </tr>  
+            </table>  
+        </form>
+
+    {% if messages %}  
+        <ul>   
+            {% for message in messages %}  
+                <li>{{ message }}</li>  
+                {% endfor %}  
+        </ul>   
+    {% endif %}
+
+</div>  
+
+{% endblock content %}
+```
+
+- ## Membuat fungsi *login*
+Agar *user* dapat melakukan login dan mengakses aplikasi kita, perlu dibuat fungsi login yang mengautentikasi *credentials* dari *user* sehingga mereka memiliki hak akses ke aplikasi. Perlu ditambahkan fungsi `login_user` pada `views.py` yang mengambil username dan password lalu mengecek apakah user tersebut terdaftar agar bisa ter-*authenticate*.
+```py
+from django.contrib.auth import authenticate, login
+...
+def login_user(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('main:show_main')
+        else:
+            messages.info(request, 'Sorry, incorrect username or password. Please try again.')
+    context = {}
+    return render(request, 'login.html', context)
+```
+Lalu buat sebuah file HTML lagi bernama `login.html` dalam `main/templates` sebagai interface input data dari user.
+```html
+{% extends 'base.html' %}
+
+{% block meta %}
+    <title>Login</title>
+{% endblock meta %}
+
+{% block content %}
+
+<div class = "login">
+
+    <h1>Login</h1>
+
+    <form method="POST" action="">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>Username: </td>
+                <td><input type="text" name="username" placeholder="Username" class="form-control"></td>
+            </tr>
+                    
+            <tr>
+                <td>Password: </td>
+                <td><input type="password" name="password" placeholder="Password" class="form-control"></td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td><input class="btn login_btn" type="submit" value="Login"></td>
+            </tr>
+        </table>
+    </form>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}     
+        
+    Don't have an account yet? <a href="{% url 'main:register' %}">Register Now</a>
+
+</div>
+
+{% endblock content %}
+```
+
+- ## Membuat fungsi *logout*
+Agar user bisa *logout* dari aplikasi, perlu dibuat sebuah fungsi `logout_user` yang mengarahkan *user* kembali ke halaman login supaya data teramankan saat komputer yang sama diakses pengguna lain. Tambahkan fungsi `logout_user` ke dalam `views.py` yang fungsinya berisi:
+```py
+from django.contrib.auth import logout
+...
+def logout_user(request):
+    logout(request)
+    return redirect('main:login')
+```
+Setelah itu pada `main.html` dalam `main/templates` perlu ditambahkan line HTML berikut di bagian setelah button `Add New Item` untuk tombol *logout*nya:
+```html
+...
+<a href="{% url 'main:logout' %}">
+    <button>
+        Logout
+    </button>
+</a>
+...
+```
+- ## Menambahkan *routing* URL dari ketiga fungsi tersebut
+Agar user bisa menggunakan fungsi-fungsi yang kita telah buat, tentunya fungsi perlu di *routing* dengan benar dengan menambahkan path URL ke dalam `urlpatterns` di dalam `main/urls.py`.
+```py
+# Tambahkan import fungsi register, login_user, dan logout_user dari views
+from main.views import register, login_user, logout_user
+...
+urlpatterns = [
+...
+    path('register/', register, name='register'),
+    path('login/', login_user, name='login'),
+    path('logout/', logout_user, name='logout'),
+]
+```
+
+- ## Membatasi *user* agar mengakses aplikasi `main`
+Agar *user* tidak sembarang mengakses aplikasi, halaman `main` perlu direstriksi agar *user* perlu login dahulu dan hak akses *user* diatur dengan benar. Dalam `main/views.py` tambahkan import `login_required` dan kode berikut di atas fungsi `show_main` supaya halaman main hanya dapat diakses oleh *user* yang sudah terautentikasi.
+```py
+from django.contrib.auth.decorators import login_required
+...
+@login_required(login_url='/login')
+def show_main(request):
+...
+```
+Setelah itu lihat hasilnya dengan menjalankan `python manage.py runserver` dalam ***virtual environment***.
+
+## Menerapkan `cookies` pada halaman utama aplikasi
+Contoh `cookies` yang dapat diterapkan pada halaman utama aplikasi adalah detail *last login* dari user. Untuk mengimplementasikannya, pastikan logout terlebih dahulu dari aplikasi Django. Lalu buka `views.py` dan update fungsi `login_user` serta tambahkan import yang sesuai di paling atas:
+```py
+# Sesuaikan penambahan import berikut
+import datetime
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+...
+def login_user(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            response = HttpResponseRedirect(reverse("main:show_main")) 
+            response.set_cookie('last_login', str(datetime.datetime.now()))
+            return response
+        else:
+            messages.info(request, 'Sorry, incorrect username or password. Please try again.')
+    context = {}
+    return render(request, 'login.html', context)
+```
+Ini akan mendapatkan waktu kapan kita terakhir kali login ke akun kita. Lalu update juga fungsi `show_main` dengan menambahkan potongan kode berikut agar informasi cookie *last login* ter*update* saat kita mengakses web:
+ ```py
+context = {
+    'app_name': "daffagrahito's Inventory Master",
+    'name': 'daffagrahito,
+    'class': 'PBP A',
+    'items': items,
+    'total_items': total_items,
+    'last_login': request.COOKIES['last_login'],
+    }
+ ```
+Lalu, agar cookie `last_login` terhapus saat *user* melakukan `logout`, ubah juga fungsi `logout_user` menjadi seperti ini:
+```py
+def logout_user(request):
+    logout(request)
+    response = HttpResponseRedirect(reverse('main:login'))
+    response.delete_cookie('last_login')
+    return response
+```
+Terakhir, tambahkan potongan kode berikut di bagian paling bawah `main.html` yaitu setelah tombol `Add New Item` dan `logout`:
+```html
+...
+<a href="{% url 'main:create_item' %}">
+        <button>
+            Add New Item
+        </button>
+    </a>
+
+    <a href="{% url 'main:logout' %}">
+        <button>
+            Logout
+        </button>
+    </a>
+
+    <h5>*session* terakhir login: {{ last_login }}</h5> <!-- Tambahkan ini -->
+...
+```
+
+## Menghubungkan Model `Item` dengan `User` dan menampilkan detail informasi *user* yang sedang logged in
+Agar setiap *user* mempunyai data inventorynya masing-masing dan detail informasi *user* seperti usernamenya sesuai saat ditampilkan pada halaman utama aplikasi, maka kita perlu menghubungkan setiap objek pada `Item` dengan `User` pembuatnya. Untuk itu, perlu ditambahkan kode berikut pada `main/models.py`:
+```py
+...
+from django.contrib.auth.models import User # Pastikan import ditambah di bawah
+
+class Item(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE) # tambahkan ini di atas variable lain
+    ...
+```
+Lalu pada `views.py` ubah fungsi `create_item` dan key `app_name` serta `name` pada `show_main` menjadi seperti ini:
+```py
+def show_main(request):
+    ...
+    context = {
+        'app_name': request.user.username + "'s Inventory Master",
+        'name': request.user.username,
+        'class': 'PBP A',
+        'items': items,
+        'total_items': total_items,
+        'last_login': request.COOKIES['last_login'],
+    }
+    ...
+    
+def create_item(request):
+    form = ItemForm(request.POST or None)
+
+    if form.is_valid() and request.method == "POST":
+        product = form.save(commit=False)
+        product.user = request.user
+        product.save()
+        return HttpResponseRedirect(reverse('main:show_main'))
+
+    context = {'form': form}
+    return render(request, "create_item.html", context)
+```
+Terakhir, pastikan untuk menjalankan `python manage.py makemigrations` dalam *virtual environment* lalu tambahkan default value saat ditampilkan prompt error dengan menginput 1 di keduanya. Setelah itu jangan lupa untuk menjalankan `python manage.py migrate`. Jalankan juga `python manage.py runserver` dan lihat perubahannya pada [http://localhost:8000/](http://localhost:8000/)
+
+## Apa itu Django `UserCreationForm`, apa kelebihan dan kekurangannya?
+Django `UserCreationForm` adalah salah satu dari banyak *forms* bawaan yang disediakan oleh Django untuk memudahkan pembuatan dan manajemen akun *user* dalam aplikasi web.
+
+- Kelebihan dari Django `UserCreationForm` adalah:
+
+    1. **Kemudahan penggunaan**, yaitu pengintegrasian yang mudah dalam aplikasi web berbasis Django dan dapat mengonfigurasi beberapa opsi sesuai kebutuhan. Form ini juga dibuat mudah untuk mengelola otentikasi dan otorisasi *user* di aplikasi.
+    2. **Validasi Otomatis**, Form ini dilengkapi dengan validasi otomatis untuk memastikan bahwa *user* memasukkan data yang benar dan sesuai, seperti verifikasi bahwa *username* yang dimasukkan adalah unik atau bahwa kata sandi memiliki kompleksitas yang cukup.
+    3. **Tersedia *Customization***, Kita bisa mendefinisikan `UserCreationForm` sesuai kebutuhan aplikasi kita. Kita bisa mengubah pesan kesalahan, menambahkan validasi tambahan, dan lain sebagainya.
+
+- Kekurangan dari Django `UserCreationForm` adalah:
+
+    1. **Kurangnya Dukungan untuk Data Pengguna Tambahan**, `UserCreationForm` secara default hanya berfokus pada data dasar *user*, seperti nama *user* (username), alamat email, dan kata sandi. Jika kita ingin data *user* tambahan, seperti nomor telepon, alamat, atau hal lainnya, Kita perlu menambahkan bidang-bidang ini secara manual atau membuat formulir pendaftaran kustom yang lebih lengkap.
+    2. **Keterbatasan dalam Validasi Kustom**, meskipun dapat menambahkan validasi tambahan, ada keterbatasan dalam sejauh mana kita dapat menyesuaikannya dengan kebutuhan validasi yang sangat spesifik.
+    3. **Tidak Memungkinkan Integrasi dengan Layanan Pihak Ketiga**, Jika aplikasi memerlukan otentikasi melalui layanan pihak ketiga seperti *Google*, `UserCreationForm` mungkin tidak langsung mendukung ini. Perlu ditambahkan logika kustom untuk mengintegrasikan otentikasi pihak ketiga dengan formulir pendaftaran.
+
+
+## Apa perbedaan antara autentikasi dan otorisasi dalam konteks Django, dan mengapa keduanya penting?
+Autentikasi (*authenthication*) dan otorisasi (*authorization*) adalah dua konsep penting dalam keamanan Django. Autentikasi adalah proses memverifikasi identitas *user*, sedangkan otorisasi adalah proses menentukan tingkat akses yang diberikan kepada *user* tersebut. Ada beberapa perbedaan utama antara autentikasi dan otorisasi. Pertama, autentikasi terjadi sebelum otorisasi. Artinya, *user* harus diautentikasi terlebih dahulu sebelum mereka dapat diotorisasi. Lalu, autentikasi berfokus pada identitas *user* dan memastikan bahwa *user* tersebut sah untuk mengakses aplikasi, sedangkan otorisasi berfokus pada hak akses tertentu yang dapat diakses *user*. Autentikasi penting untuk melindungi data *user* dan informasi yang sensitif. Tanpa autentikasi, orang yang tidak berwenang dapat mengakses data dan fitur yang seharusnya hanya tersedia untuk *user* yang sah. Otorisasi juga penting untuk menjaga keamanan dan privasi data. Meskipun seorang *user* telah diotentikasi, itu tidak berarti mereka harus memiliki akses penuh ke semua fitur atau data dalam aplikasi.
+
+## Apa itu cookies dalam konteks aplikasi web, dan bagaimana Django menggunakan cookies untuk mengelola data sesi *user*?
+Cookies dalam konteks aplikasi web adalah file informasi kecil yang disimpan di perangkat *user* oleh server web. Jadi, Django menggunakan cookies untuk mengelola data *session* milik *user* dengan mengkonfigurasi sistem sesi di `settings.py`. `Middleware` *session* memastikan *cookie session* dikelola dengan benar. Data *session*, seperti nama *user*, dapat disimpan dalam `request.session`. Penggunaan data *session* tersebut dapat diambil dari `request.session` dalam tampilan. Django secara otomatis mengelola cookie ini, mengirimkannya ke browser *user*, dan mengizinkan server untuk mengidentifikasi dan mengakses data *session* yang sesuai setiap kali *user* mengirimkan permintaan. Pengguna juga dapat menghapus data *session* dengan menghapus entri yang sesuai dari `request.session`. 
+
+## Apakah penggunaan cookies aman secara default dalam pengembangan web, atau apakah ada risiko potensial yang harus diwaspadai?
+
+Penggunaan cookies secara default dalam pengembangan web umumnya aman. Namun, ada beberapa risiko potensial yang harus diwaspadai, antara lain:
+
+- **Kebocoran data**, Cookies dapat digunakan untuk menyimpan informasi pribadi, seperti nama pengguna, alamat email, atau kata sandi. Jika cookie ini jatuh ke tangan orang yang tidak bertanggung jawab, informasi tersebut dapat digunakan untuk melakukan penipuan atau kejahatan lainnya.
+- **Pelacakan pengguna**, Cookies dapat digunakan untuk melacak aktivitas pengguna di berbagai situs web. Hal ini dapat digunakan untuk menargetkan pengguna dengan iklan atau konten yang relevan, tetapi juga dapat digunakan untuk memantau perilaku pengguna.
+- **Interferensi dengan privasi**, Cookies dapat digunakan untuk mengganggu privasi pengguna. Misalnya, cookies dapat digunakan untuk melacak lokasi pengguna atau untuk menyimpan informasi tentang kebiasaan penelusuran pengguna.
+
+Untuk mengurangi risiko-risiko tersebut, pengembang web dapat mengambil langkah-langkah berikut:
+
+- **Gunakan cookies hanya untuk tujuan yang diperluka**n, Jangan menyimpan informasi pribadi di cookies jika tidak perlu.
+- **Gunakan cookies dengan aman**, Gunakan metode enkripsi untuk melindungi informasi pribadi yang disimpan di cookies.
+- **Berikan informasi kepada pengguna**, Beri tahu pengguna tentang jenis cookies yang digunakan di situs web dan bagaimana cookies tersebut digunakan.
+
+## Implementasi Bonus
+Terdapat tombol `+` untuk menambahkan `amount` dari item inventory dan `-` untuk mengurangi `amount` dari item dari inventory. Ada juga button `Delete` yang dapat langsung menghapus item inventory tersebut. Juga, apabila `amount` item berjumlah 1 dan kita mengeklik button `-` maka akan dianggap sebagai hapus item. Adapun fungsi dalam `views.py` dari ketiga tombol tersebut adalah:
+```py
+...
+def increase_stock(request, id):
+    if request.method == "POST":
+        item = get_object_or_404(Item, pk=id, user=request.user)
+        item.amount += 1
+        item.save()
+    return HttpResponseRedirect(reverse('main:show_main'))
+
+def decrease_stock(request, id):
+    if request.method == "POST":
+        item = get_object_or_404(Item, pk=id, user=request.user)
+        if item.amount > 1:
+            item.amount -= 1
+            item.save()
+        else:
+            item.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
+
+def delete_item(request, id):
+    if request.method == "POST":
+        item = get_object_or_404(Item, pk=id, user=request.user)
+        item.delete()
+    return HttpResponseRedirect(reverse('main:show_main'))
+...
+```
+Dalam `main.html` perlu ditambahkan tombol dalam format HTML pada data cell. 
+```html
+...
+    <td>
+        <form method="post" action="{% url 'main:increase_stock' item.id %}">
+            {% csrf_token %}
+            <button type="submit">+</button>
+        </form>
+    </td>
+    <td>
+        <form method="post" action="{% url 'main:decrease_stock' item.id %}">
+            {% csrf_token %}
+            <button type="submit">-</button>
+        </form>
+    </td>
+    <td>
+        <form method="post" action="{% url 'main:delete_item' item.id %}">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+        </form>
+    </td>
+...
+```
+Lalu juga perlu ditambahkan URL mapping dari `views.py` ke `urls.py`
+```py
+# Sesuaikan importnya
+...
+from main.views import increase_stock, decrease_stock, delete_item
+...
+urlpatterns = [
+    ...
+    path('increase_stock/<int:id>/', increase_stock, name='increase_stock'),
+    path('decrease_stock/<int:id>/', decrease_stock, name='decrease_stock'),
+    path('delete_item/<int:id>/', delete_item, name='delete_item'),
+]
+```
+
+## Membuat dua akun pengguna dengan masing-masing tiga dummy data menggunakan model yang telah dibuat
+Berikut Screenshot halaman utama untuk dua akun *user* berbeda:
+
+akun: daffagrahito
+![Gambar1](https://cdn.discordapp.com/attachments/1152952874037428306/1155947241857617981/image.png)
+
+akun: daffaG
+![Gambar2](https://cdn.discordapp.com/attachments/1152952874037428306/1155947091714121860/image.png)
+
+<details>
+
+<summary> Tugas 3 </summary>
+
 ### Tugas 3 - Pemrograman Berbasis Platform
 
 `Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
 <br><hr>
+> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
 
-## Mengatur Routing dari `main/` ke`/`
+## Perubahan Implementasi Aplikasi
+- ## Mengatur Routing dari `main/` ke `/`
 Supaya lebih mengikuti aturan umum yang digunakan dalam pengaturan rute URL di *web application* ini, akan diubah routing yang sebelumnya dari *`main/`* ke *`/`* (root).
 
 Perlu diubah `urls.py` yang ada pada subdirektori inventory_master menjadi seperti ini:
@@ -17,7 +408,7 @@ urlpatterns = [
 ]
 ```
 
-## Membuat kerangka dari `views` menggunakan `skeleton`
+- ## Membuat kerangka dari `views` menggunakan `skeleton`
 Kerangka views dengan skeleton (*base template*) diperlukan untuk menjaga konsistensi desain antara halaman web dalam project, memperkecil kemungkinan *code redudancy*, memisahkan logika dari tampilan, dan memungkinkan perubahan desain global dengan mudah.
 
 Perlu dibuat folder `templates` pada root folder dan di isi dengan suatu file HTML yang baru bernama `base.html` sebagai template dasar. Isi dari base.html adalah:
@@ -247,7 +638,7 @@ def show_json_by_id(request, id):
 ```
 
 - ## Membuat *routing* URL untuk masing-masing `views`
-Agar *web application* dapat menentukan bagaimana merespons permintaan dari pengguna berdasarkan URL yang mereka akses, setiap URL akan dihubungkan dengan view dari masing-masing fungsi yang sesuai. Untuk itu perlu ditambahkan semua *path url*nya ke dalam `urls.py` yang ada di direktori `main`. `urls.py` diubah menjadi seperti ini:
+Agar *web application* dapat menentukan bagaimana merespons permintaan dari *user* berdasarkan URL yang mereka akses, setiap URL akan dihubungkan dengan view dari masing-masing fungsi yang sesuai. Untuk itu perlu ditambahkan semua *path url*nya ke dalam `urls.py` yang ada di direktori `main`. `urls.py` diubah menjadi seperti ini:
 ```py
 from django.urls import path
 from main.views import show_main, create_item, show_xml, show_json, show_xml_by_id, show_json_by_id # Import semua function dari views
@@ -323,8 +714,11 @@ Lalu ditambahkan kode berikut pada template `main.html` untuk menampilkan berapa
     <table>
 ...
 ```
+</details>
+<hr>
 
-<hr><hr>
+<details>
+<summary> Tugas 2 </summary>
 
 ### Tugas 2 - Pemrograman Berbasis Platform
 
@@ -472,7 +866,7 @@ Terakhir, saya menge-*push* segala perubahan seluruh project saya ke repository 
 Gambar bagan tersebut menjelaskan bahwa setiap HTTP request aplikasi `main` yang masuk akan diproses oleh `urls.py` dan HTTP request diteruskan ke `views.py` yang sesuai. `views.py` akan mendapatkan informasi yang dibutuhkan dari *database* melalui `models.py`. Lalu, HTTP request ini akan di-*return* oleh *view* ke *client* dalam bentuk HTML yang tampilannya seperti template `main.html` sebagai respons.
 
 ## Mengapa kita menggunakan virtual environment? Apakah kita tetap dapat membuat aplikasi web berbasis Django tanpa menggunakan virtual environment?
->Virtual environment digunakan untuk mengisolasi *dependencies* project-project Python, termasuk Django, sehingga perubahan di satu project tidak mempengaruhi proyek lain dan memudahkan manajemen *dependencies*. Meskipun demikian, Kita masih bisa membuat aplikasi web Django tanpa virtual environment. Namun, hal ini dapat menimbulkan beberapa masalah seperti konflik *dependencies* antara project yang berbeda, kesulitan dalam manajemen paket, dan kurangnya portabilitas sehingga project yang dibangun menjadi bermasalah
+Virtual environment digunakan untuk mengisolasi *dependencies* project-project Python, termasuk Django, sehingga perubahan di satu project tidak mempengaruhi proyek lain dan memudahkan manajemen *dependencies*. Meskipun demikian, Kita masih bisa membuat aplikasi web Django tanpa virtual environment. Namun, hal ini dapat menimbulkan beberapa masalah seperti konflik *dependencies* antara project yang berbeda, kesulitan dalam manajemen paket, dan kurangnya portabilitas sehingga project yang dibangun menjadi bermasalah
 
 ## Perbedaan MVC, MVT, MVVM
 MVC, MVT, dan MVVM adalah tiga pola desain arsitektur yang berbeda yang digunakan dalam pengembangan perangkat lunak.
@@ -490,7 +884,7 @@ Perbedaan utama antara ketiganya yaitu :
     - MVVM memulai aplikasi dari view
 
 2. Input:
-    - Input MVC ditangani oleh controlSler
+    - Input MVC ditangani oleh controller
     - Input MVT ditangani oleh template atau bisa juga view
     - Input MVVM ditangani oleh View
 
@@ -516,3 +910,4 @@ def test_name_and_class_are_set_correctly_in_main_template(self):
         self.assertContains(response, name)
         self.assertContains(response, class_name)
 ``` 
+</details>
