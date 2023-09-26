@@ -307,7 +307,7 @@ Penggunaan cookies secara default dalam pengembangan web umumnya aman. Namun, ad
 
 Untuk mengurangi risiko-risiko tersebut, pengembang web dapat mengambil langkah-langkah berikut:
 
-- **Gunakan cookies hanya untuk tujuan yang diperluka**n, Jangan menyimpan informasi pribadi di cookies jika tidak perlu.
+- **Gunakan cookies hanya untuk tujuan yang diperlukan**, Jangan menyimpan informasi pribadi di cookies jika tidak perlu.
 - **Gunakan cookies dengan aman**, Gunakan metode enkripsi untuk melindungi informasi pribadi yang disimpan di cookies.
 - **Berikan informasi kepada pengguna**, Beri tahu pengguna tentang jenis cookies yang digunakan di situs web dan bagaimana cookies tersebut digunakan.
 
@@ -339,7 +339,7 @@ def delete_item(request, id):
     return HttpResponseRedirect(reverse('main:show_main'))
 ...
 ```
-Dalam `main.html` perlu ditambahkan tombol dalam format HTML pada data cell. 
+Dalam `main.html` perlu ditambahkan tombol dalam format HTML pada data cell agar action dari user terekam. 
 ```html
 ...
     <td>
@@ -362,7 +362,7 @@ Dalam `main.html` perlu ditambahkan tombol dalam format HTML pada data cell.
     </td>
 ...
 ```
-Lalu juga perlu ditambahkan URL mapping dari `views.py` ke `urls.py`
+Lalu juga perlu ditambahkan URL mapping dari `urls.py` ke `views.py` 
 ```py
 # Sesuaikan importnya
 ...
