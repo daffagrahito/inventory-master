@@ -6,40 +6,109 @@
 
 {% block content %}
 
-<div class = "login">
-
-    <h1>Login</h1>
-
-    <form method="POST" action="">
-        {% csrf_token %}
-        <table>
-            <tr>
-                <td>Username: </td>
-                <td><input type="text" name="username" placeholder="Username" class="form-control"></td>
-            </tr>
-                    
-            <tr>
-                <td>Password: </td>
-                <td><input type="password" name="password" placeholder="Password" class="form-control"></td>
-            </tr>
-
-            <tr>
-                <td></td>
-                <td><input class="btn login_btn" type="submit" value="Login"></td>
-            </tr>
-        </table>
-    </form>
-
+<div class="login">
     {% if messages %}
+    <div class="alert">
         <ul>
             {% for message in messages %}
                 <li>{{ message }}</li>
             {% endfor %}
         </ul>
-    {% endif %}     
-        
-    Don't have an account yet? <a href="{% url 'main:register' %}">Register Now</a>
+    </div>
+    {% endif %}
+
+    <section class="vh-100 gradient-custom">
+        <div class="container py-5 h-100">
+            <div class="row d-flex justify-content-center align-items-center h-100">
+                <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                    <div class="card bg-dark text-white" style="border-radius: 1rem;">
+                        <div class="card-body p-5 text-center">
+
+                            <div class="mb-md-5 mt-md-4 pb-5">
+
+                                <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
+                                <p class="text-white-50 mb-5">Please enter your username and password!</p>
+
+                                <form method="POST" action="">
+                                    {% csrf_token %}
+                                    <div class="form-outline form-white mb-4">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-user"></i> <!-- Username icon -->
+                                                </span>
+                                            </div>
+                                            <input type="text" name="username" placeholder="Username" class="form-control" />
+                                        </div>
+                                    </div>
+                                
+                                    <div class="form-outline form-white mb-4">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-lock"></i> <!-- Password icon -->
+                                                </span>
+                                            </div>
+                                            <input type="password" name="password" placeholder="Password" class="form-control" />
+                                        </div>
+                                    </div>
+                                
+                                    <button class="btn btn-outline-light btn-lg px-5 login_btn" type="submit" value="login">Login</button>
+                                </form>                                
+
+                            </div>
+
+                            <div>
+                                <p class="mb-0">Don't have an account? <a href="{% url 'main:register' %}">Register Now</a></p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
 </div>
+
+<style>
+    html, body {
+        background: linear-gradient(to bottom right, #4e54c8, #8f94fb); /* Replace with your desired background color */
+        background-attachment: scroll; /* This prevents the background from scrolling */
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    /* Adjust button color */
+    .login_btn {
+        background-color: #4e54c8;
+        color: white;
+    }
+
+    /* Optional: Style form labels */
+    .form-label {
+        color: white;
+    }
+
+    .form-control {
+        font-size: 18px; /* Adjust the desired font size */
+        border-radius: 10px 0 0 10px; /* Increase this value for more rounded corners */
+    }
+
+    /* Increase the size of icons */
+   .input-group-text i {
+       font-size: 30px; /* Adjust the desired icon size */
+   }
+
+    /* Optional: Add some padding to the form */
+    .form-outline {
+        padding: 1rem;
+    }
+
+    .alert {
+        color: white;
+        background-color: black;
+    }
+</style>
 
 {% endblock content %}

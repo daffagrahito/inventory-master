@@ -22,19 +22,19 @@ def show_main(request):
         'class': 'PBP A',
         'items': items,
         'total_items': total_items,
-        'last_login': request.COOKIES['last_login'],
+        'last_login': request.COOKIES.get('last_login'),
     }
 
     return render(request, "main.html", context)
 
-def increase_stock(request, id):
+def increase_amount(request, id):
     if request.method == "POST":
         item = get_object_or_404(Item, pk=id, user=request.user)
         item.amount += 1
         item.save()
     return HttpResponseRedirect(reverse('main:show_main'))
 
-def decrease_stock(request, id):
+def decrease_amount(request, id):
     if request.method == "POST":
         item = get_object_or_404(Item, pk=id, user=request.user)
         if item.amount > 1:
@@ -61,6 +61,21 @@ def create_item(request):
 
     context = {'form': form}
     return render(request, "create_item.html", context)
+
+def edit_item(request, id):
+    # Get product berdasarkan ID
+    item = Item.objects.get(pk = id)
+
+    # Set product sebagai instance dari form
+    form = ItemForm(request.POST or None, instance=item)
+
+    if form.is_valid() and request.method == "POST":
+        # Simpan form dan kembali ke halaman awal
+        form.save()
+        return HttpResponseRedirect(reverse('main:show_main'))
+
+    context = {'form': form}
+    return render(request, "edit_item.html", context)
 
 def show_xml(request):
     data = Item.objects.all()

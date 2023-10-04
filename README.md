@@ -1,5 +1,296 @@
 # Inventory Master
 
+### Tugas 5 - Pemrograman Berbasis Platform
+
+`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
+
+> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
+
+## Implementasi CSS pada Web Application
+- ## Menambahkan *library* yang dibutuhkan
+Untuk dapat memulai men*design* aplikasi web, kita harus mengimport library yang dibutuhkan seperti Bootstrap CSS dan juga JS. Untuk itu saya tambahkan kode ini pada `<head>` section dalam `base.html` pada direktori `templates` yang ada di direktori `root`.
+```html
+    <head>
+        {% block meta %}
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        {% endblock meta %}
+        <!-- Include Bootstrap CSS from a CDN (Content Delivery Network) -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+        <!-- Include Font Awesome CSS from a CDN (Content Delivery Network) -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+        <!-- Include jQuery library from a CDN -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-KyZXEAg3QhqLMpG8r+J4jsl5c9zdLKaUk5Ae5f5b1bw6AUn5f5v8FZJoMxm6f5cH1" crossorigin="anonymous"></script>
+
+        <!-- Include Popper.js library from a CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+
+        <!-- Include Bootstrap JavaScript from a CDN -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js" integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+" crossorigin="anonymous"></script>
+
+        <!-- Include Bootstrap CSS from a CDN (This line is a duplicate of the first Bootstrap CSS link) -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Include Bootstrap JavaScript from a CDN (This line is a duplicate of the previous Bootstrap JS link) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap/dist/js/bootstrap.min.js"></script>
+    </head>
+```
+
+- ## Kustomisasi halaman `login` dan `register`
+Pada halaman login dan register, ide design saya kurang lebih mirip. Saya mencari template Bootstrap yang ada di internet, lalu saya coba untuk ubah sedikit-sedikit dan merapikannya dalam bentuk yang saya inginkan. Untuk isi kode dari keduanya dapat dilihat dalam folder `main/templates`. Terdapat juga beberapa implementasi CSS murni dalam *internal* dan juga *inline* *code*. Untuk sekarang model ini yang akan saya gunakan dan saya harap kedepannya masih dapat saya *improve*.
+
+- ## Kustomisasi halaman daftar inventori
+Pada halaman daftar inventori, saya mengimplementasikan *Card Bootstrap* untuk menampilkan daftar inventorinya disertai *buttons* yang memiliki fungsinya sendiri. Ada satu button tambahan yang belum ada di tugas-tugas sebelumnya yaitu `Show Description` yang berfungsi untuk menampilkan description dari *inventory item* yang menggunakan *Bootstrap modals*, yaitu semacam pop-up berisi informasi apabila kita pakai. Selain itu, saya juga menambahkan *navbar* di bagian atas halaman aplikasi yang terdapat nama app yang berdasarkan username dan juga *logout* button. Berikut *snippet code* saya dalam mengimplementasikan *navbar* dan *Card* pada halaman daftar inventori:
+```html
+    ...
+    <nav class="navbar bg-dark border-bottom border-body" data-bs-theme="dark">
+        <div class="container-fluid">
+        <a class="navbar-brand">{{ app_name }}</a>
+        <form class="d-flex" role="logout">
+            <a href="{% url 'main:logout' %}">
+                <button class="btn btn-outline-success" type="button">Logout</button>
+            </a>
+        </form>
+        </div>
+    </nav>
+    ...
+        <div class="card main">
+            <div class="card-body d-flex flex-wrap">
+                {% for item in items %}
+                <div class="card mb-3 item-card">
+                    <div class="card-header">
+                        {{ item.name }}
+                    </div>
+                    <div class="card-body">
+                        <p><b>Amount:</b> {{ item.amount }}</p> 
+                        <p><b>Date Added:</b> {{ item.date_added }}</p>
+                        <p><b>Category:</b> {{ item.category }}</p>
+                        <div class="btn-group" role="group">
+                            <form method="post" action="{% url 'main:increase_amount' item.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm mx-1" type="submit">+</button>
+                            </form>
+                            <form method="post" action="{% url 'main:decrease_amount' item.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm mx-1" type="submit">-</button>
+                            </form>
+                            <form method="post" action="{% url 'main:delete_item' item.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-danger btn-sm mx-1" type="submit">Delete</button>
+                            </form>
+                            <a href="{% url 'main:edit_item' item.pk %}">
+                                <button class="btn btn-primary btn-sm mx-1" type="submit">Edit</button>
+                            </a>
+                            <!-- Button to trigger the modal -->
+                            <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal{{ item.id }}">
+                                Show Description
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal -->
+                <div class="modal fade" id="descriptionModal{{ item.id }}" tabindex="-1" aria-labelledby="descriptionModalLabel{{ item.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="descriptionModalLabel{{ item.id }}">Description</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                {{ item.description }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>       
+    ... 
+```
+Untuk kode lebih lengkapnya dapat dilihat dalam file `main.html` dalam folder `main/templates`.
+
+- ## Kustomisasi halaman *Add New Item* dan *Edit Item*
+Pada halaman *Add New Item* dan *Edit Item*, ide design yang saya pakai cukup mirip dan simpel. Form yang di *render* sebagai tabel dimasukkan dalam *Card* dan ditambahkan sedikit CSS untuk warna background dan buttons. Berikut adalah salah satu kode saya dan selengkapnya dapat dilihat dalam file `create_item.html` dan `edit_item.html` dalam folder `main/templates`
+
+`create_item.html`:
+```html
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="card-title">Add New Item</h1>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <table class="table">
+                            {{ form.as_table }}
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <button type="submit" class="btn btn-primary">Add Item</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Latar belakang */
+    html, body {
+        background: linear-gradient(to bottom right, white, #8f94fb);
+        background-attachment: scroll;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    /* Tombol Add Item */
+    .btn-primary {
+        background-color: rgb(60, 60, 60);
+        border-color: black;
+    }
+</style>
+{% endblock %}
+```
+
+## Manfaat dari setiap element selector pada CSS dan kapan waktu yang tepat untuk menggunakannya.
+1. Element Selector, manfaatnya untuk memilih semua elemen dengan jenis tertentu, seperti p untuk paragraf, h1 untuk judul level 1, dan sebagainya. Selector ini memberikan kemampuan untuk *styling* semua elemen dengan jenis yang sama yang ada dalam satu file html dengan gaya yang seragam.
+
+2. ID Selector (#), digunakan untuk memilih elemen dengan atribut id tertentu. Ini memungkinkan kita untuk *styling* atau memanipulasi elemen unik dalam satu halaman. Setiap ID harus unik dalam satu halaman HTML.
+
+3. Class Selector (.), Class selector digunakan untuk memilih elemen dengan atribut class tertentu. Ini memungkinkan kita untuk *styling* atau memanipulasi sekelompok elemen yang memiliki kesamaan dalam tampilan atau perilaku. Elemen dengan class yang sama dapat digunakan berkali-kali dalam satu file HTML.
+
+4. Universal Selector (*), digunakan untuk memilih semua elemen dalam satu file HTML. Ini dapat berguna dalam beberapa situasi ketika kita ingin memberikan *styling* yang umum ke seluruh dokumen.
+
+Waktu yang tepat untuk menggunakan setiap element selector tergantung pada kebutuhan:
+
+- Element Selector: Gunakan saat Anda ingin menggaya atau memanipulasi semua elemen dengan jenis yang sama dalam dokumen Anda, seperti mengatur gaya teks dalam semua paragraf (p).
+
+- ID Selector: Gunakan ketika Anda ingin menggaya atau memanipulasi elemen unik dalam halaman Anda, seperti header utama (#header).
+
+- Class Selector: Gunakan saat Anda ingin menggaya atau memanipulasi sekelompok elemen yang memiliki kesamaan dalam tampilan atau perilaku, seperti tombol dengan class tertentu (.btn).
+
+- Universal Selector: Gunakan dengan hati-hati, jika diperlukan, untuk mengatur gaya umum ke seluruh dokumen. Hindari penggunaan berlebihan agar tidak memengaruhi kinerja atau tampilan yang tidak diinginkan.
+
+## HTML5 Tags
+- `<html>`: Tag awal untuk mendefinisikan dokumen HTML.
+
+- `<head>`: Tempat untuk informasi meta dan elemen-elemen lainnya seperti `<title>`.
+
+- `<title>`: Judul dokumen yang akan ditampilkan di bilah judul browser.
+
+- `<meta>`: Informasi meta seperti karakter set dan deskripsi halaman.
+
+- `<link>`: Menghubungkan dokumen dengan file eksternal seperti stylesheet.
+
+- `<style>`: Mendefinisikan gaya CSS di dalam dokumen HTML.
+
+- `<script>`: Mendefinisikan skrip JavaScript.
+
+- `<body>`: Isi utama dokumen HTML.
+
+- `<h1>` hingga `<h6>`: Judul dengan tingkat kepentingan yang berbeda.
+
+- `<p>`: Paragraf teks.
+
+- `<a>`: Hyperlink untuk menghubungkan ke halaman lain atau sumber eksternal.
+
+- `<img>`: Menampilkan gambar.
+
+- `<ul>`: Daftar tak terurut.
+
+- `<ol>`: Daftar terurut.
+
+- `<li>`: Elemen daftar dalam `<ul>` atau `<ol>`.
+
+- `<div>`: Kontainer untuk mengelompokkan elemen.
+
+- `<span>`: Kontainer inline untuk mengelompokkan teks atau elemen kecil.
+
+- `<form>`: Formulir untuk mengumpulkan data dari pengguna.
+
+- `<input>`: Elemen masukan dalam formulir.
+
+- `<textarea>`: Area teks multiline dalam formulir.
+
+## Perbedaan antara *Margin* dan *Padding* pada CSS
+| <center> Margin | <center> Padding |
+| -- | -- |
+| Mengacu pada ruang di luar batas luar elemen. | Mengacu pada ruang di dalam batas elemen, di antara kontennya dan batasnya sendiri |
+| Digunakan untuk mengatur jarak antara elemen tersebut dengan elemen-elemen lain di sekitarnya | Digunakan untuk mengatur jarak antara konten elemen dan batas elemen tersebut |
+| Margin tidak berwarna atau transparan, sehingga tidak memengaruhi tampilan elemen itu sendiri | Padding memengaruhi tampilan elemen itu sendiri dengan mengatur seberapa dekat kontennya dengan batasnya |
+| Dapat digunakan untuk mengatur ruang di antara elemen-elemen dalam tata letak halaman | Digunakan untuk mengatur ruang di antara konten elemen dan batasnya, sehingga memengaruhi ukuran elemen itu sendiri. |
+
+## Perbedaan antara framework CSS Tailwind dan Bootstrap. Kapan sebaiknya kita menggunakan Bootstrap daripada Tailwind, dan sebaliknya?
+Perbedaan dari framework CSS Tailwind dan Bootstrap dapat dilihat dari poin-poin berikut:
+
+| <center> Tailwind | <center> Bootstrap |
+| -- | -- |
+| Tailwind adalah framework CSS *"utility-first,"* yang berarti ia memberikan kelas-kelas CSS kecil yang dapat digunakan untuk membangun komponen-komponen secara lebih fleksibel sesuai *design* yang kita mau | Bootstrap memiliki komponen-komponen siap pakai dengan desain dan tampilan yang telah ditentukan sebelumnya. Jadi kita cukup menambahkan komponen-komponen ini ke project kita dan menggunakannya dengan sedikit penyesuaian |
+| Memiliki ukuran yang lebih kecil daripada Bootstrap karena ia hanya menghasilkan CSS yang digunakan pada *project* sesuai kebutuhan, sehingga halaman web jadi lebih ringan | Memiliki ukuran yang lebih besar karena ia memuat sejumlah besar komponen, gaya, dan JavaScript yang dapat digunakan |
+| Lebih fleksibel dan memungkinkan untuk menyesuaikan tampilan dengan sangat detail | Lebih kaku dalam hal desain karena komponen-komponennya sudah ditentukan sebelumnya. Menyesuaikan tampilan dapat memerlukan usaha lebih banyak. |
+| Memerlukan pembelajaran awal yang lebih panjang karena perlu mengenal dan memahami kelas-kelas utilitasnya | Lebih mudah digunakan untuk pemula karena komponen-komponennya sudah terdefinisi dengan baik. |
+
+Jadi dari perbedaan-perbedaan tersebut dapat kita ambil kapan kita harus menggunakan Bootstrap dan kapan kita harus menggunakan Tailwind.
+
+**Gunakan Bootstrap jika:**
+
+- Memerlukan pembuatan tampilan yang cepat dengan komponen-komponen yang sudah jadi.
+- Semisal bekerja dalam tim besar dengan developer yang lebih terbiasa dengan Bootstrap.
+- Kustomisasi tampilan tidak menjadi prioritas utama.
+- Kita ingin menghemat waktu dalam pengembangan.
+
+**Gunakan Tailwind CSS jika:**
+
+- Ingin tampilan yang sangat disesuaikan dan unik.
+- Kita dan tim kita memiliki kebutuhan khusus dalam hal kustomisasi tampilan.
+- Ingin menghindari payload CSS yang besar pada proyek Anda.
+- Kita dan tim kita siap untuk mempelajari dan menggunakan kelas-kelas utilitas Tailwind.
+
+## Implementasi Bonus
+Untuk Implementasi bonus pada aplikasi web saya, saya mengubah bagian class card saya seperti dibawah ini pada `main.html` dalam direktori `main/templates`. Setelah itu saya tinggal kustomisasi dengan internal CSS.
+```html
+        ...
+            <div class="card mb-3 item-card {% if forloop.last %} last-item-card{% endif %}">
+        ...
+<style>
+    ...
+    /* Mengatur tampilan samping-sampingan menggunakan Flexbox */
+    .item-card {
+        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang yang Anda inginkan */
+        flex: 0 0 calc(50% - 20px); /* 50% lebar, dengan margin sebesar 10px */
+        margin: 10px;
+    }
+
+    .last-item-card {
+        background: linear-gradient(to bottom right, #4e54c8, #8f94fb); /* Ganti dengan warna latar belakang atau properti CSS lainnya yang Anda inginkan */
+        color: white; /* Ganti dengan warna teks yang sesuai */
+    }
+    </style>
+{% endblock content %}
+```
+
+<hr>
+<details>
+<summary>Tugas 4 </summary>
+
 ### Tugas 4 - Pemrograman Berbasis Platform
 
 `Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
@@ -384,7 +675,8 @@ akun: daffagrahito
 
 akun: daffaG
 ![Gambar2](https://cdn.discordapp.com/attachments/1152952874037428306/1155947091714121860/image.png)
-
+</details>
+<hr>
 <details>
 
 <summary> Tugas 3 </summary>

@@ -1,70 +1,125 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <center><h1>{{ app_name }}</h1>
+    <nav class="navbar bg-dark border-bottom border-body" data-bs-theme="dark">
+        <div class="container-fluid">
+        <a class="navbar-brand">{{ app_name }}</a>
+        <form class="d-flex" role="logout">
+            <a href="{% url 'main:logout' %}">
+                <button class="btn btn-outline-success" type="button">Logout</button>
+            </a>
+        </form>
+        </div>
+    </nav>
 
-    <h4>An inventory to manage inventories</h4>
-    <hr>
+    <center>
+    <div class="container mt-4">
+        <h4>An inventory to manage inventories</h4>
+        <hr>
 
-    <p><b>Name:</b> {{ name }}</p>
-    <p><b>Class:</b> {{ class }}</p>
+        <p><b>Name:</b> {{ name }}</p>
+        <p><b>Class:</b> {{ class }}</p>
 
-    <hr>
+        <hr>
 
-    <p>Terdapat {{ total_items }} inventory yang telah dimasukkan</p>
-    
-    <table>
-        <tr>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Description</th>
-            <th>Date Added</th>
-            <th>Category</th>
-        </tr>
-    
-        {% for item in items %}
-            <tr>
-                <td>{{item.name}}</td>
-                <td>{{item.amount}}</td>
-                <td>{{item.description}}</td>
-                <td>{{item.date_added}}</td>
-                <td>{{item.category}}</td>
-                <td>
-                    <form method="post" action="{% url 'main:increase_stock' item.id %}">
-                        {% csrf_token %}
-                        <button type="submit">+</button>
-                    </form>
-                </td>
-                <td>
-                    <form method="post" action="{% url 'main:decrease_stock' item.id %}">
-                        {% csrf_token %}
-                        <button type="submit">-</button>
-                    </form>
-                </td>
-                <td>
-                    <form method="post" action="{% url 'main:delete_item' item.id %}">
-                        {% csrf_token %}
-                        <button type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
-    
-    <br />
-    
-    <a href="{% url 'main:create_item' %}">
-        <button>
-            Add New Item
-        </button>
-    </a>
+        <p>Terdapat {{ total_items }} inventory yang telah dimasukkan</p>
 
-    <a href="{% url 'main:logout' %}">
-        <button>
-            Logout
-        </button>
-    </a>
+        <div class="card main">
+            <div class="card-body d-flex flex-wrap">
+                {% for item in items %}
+                <div class="card mb-3 item-card {% if forloop.last %} last-item-card{% endif %}">
+                    <div class="card-header">
+                        {{ item.name }}
+                    </div>
+                    <div class="card-body">
+                        <p><b>Amount:</b> {{ item.amount }}</p> 
+                        <p><b>Date Added:</b> {{ item.date_added }}</p>
+                        <p><b>Category:</b> {{ item.category }}</p>
+                        <div class="btn-group" role="group">
+                            <form method="post" action="{% url 'main:increase_amount' item.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm mx-1" type="submit">+</button>
+                            </form>
+                            <form method="post" action="{% url 'main:decrease_amount' item.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success btn-sm mx-1" type="submit">-</button>
+                            </form>
+                            <form method="post" action="{% url 'main:delete_item' item.id %}">
+                                {% csrf_token %}
+                                <button class="btn btn-danger btn-sm mx-1" type="submit">Delete</button>
+                            </form>
+                            <a href="{% url 'main:edit_item' item.pk %}">
+                                <button class="btn btn-primary btn-sm mx-1" type="submit">Edit</button>
+                            </a>
+                            <!-- Button to trigger the modal -->
+                            <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal{{ item.id }}">
+                                Show Description
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-    <h5>Sesi terakhir login: {{ last_login }}</h5>
+                <!-- Modal -->
+                <div class="modal fade" id="descriptionModal{{ item.id }}" tabindex="-1" aria-labelledby="descriptionModalLabel{{ item.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="descriptionModalLabel{{ item.id }}">Description</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                {{ item.description }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>        
+
+        <div class="mt-3">
+            <a href="{% url 'main:create_item' %}" class="btn new-item-button">
+                Add New Item
+            </a>
+        </div>
+
+        <p></p>
+        <h5>Sesi terakhir login: {{ last_login }}</h5>
+    </div>
     </center>
+
+    <style>
+    html, body {
+        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang yang Anda inginkan */
+        background-attachment: scroll; /* Ini mencegah latar belakang menggulir */
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    /* Atur warna tombol */
+    .new-item-button {
+        background-color: rgb(60, 60, 60);
+        color: white;
+    }   
+
+    .main {
+        max-width: 100%; /* Menggunakan lebar maksimum untuk tampilan desktop */
+    }
+
+    /* Mengatur tampilan samping-sampingan menggunakan Flexbox */
+    .item-card {
+        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang yang Anda inginkan */
+        flex: 0 0 calc(50% - 20px); /* 50% lebar, dengan margin sebesar 10px */
+        margin: 10px;
+    }
+
+    .last-item-card {
+        background: linear-gradient(to bottom right, #4e54c8, #8f94fb); /* Ganti dengan warna latar belakang atau properti CSS lainnya yang Anda inginkan */
+        color: white; /* Ganti dengan warna teks yang sesuai */
+    }
+    </style>
+
 {% endblock content %}
