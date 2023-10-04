@@ -287,6 +287,22 @@ Untuk Implementasi bonus pada aplikasi web saya, saya mengubah bagian class card
 {% endblock content %}
 ```
 
+## App Screenshot
+**Halaman Login**:
+![Login page](https://cdn.discordapp.com/attachments/1152952874037428306/1158954807223144448/image.png?ex=651e2046&is=651ccec6&hm=7120d40acb745d61058722fde6687a59f9bf84623d172cd71a1f7fae0f5443e2&)
+
+**Halaman Register**
+![Register page](https://cdn.discordapp.com/attachments/1152952874037428306/1158954885153292378/image.png?ex=651e2058&is=651cced8&hm=18b2723bc6251ba41bcb51b44e64e569b3c86eeae637c0050cac67e4875ef791&)
+
+**Main App**
+![Main App page](https://cdn.discordapp.com/attachments/1152952874037428306/1158955046969540618/image.png?ex=651e207f&is=651cceff&hm=794880ddfe14ee06b418ded0aef3fe187edf4428625395dd95e0fcd20ff36000&)
+
+**Halaman Add New Item**
+![Add New item page](https://cdn.discordapp.com/attachments/1152952874037428306/1158955558351671336/image.png?ex=651e20f9&is=651ccf79&hm=524bd023e10e4d2e3e6e106588f975deabffb955ab92f5603ed64e14a9e4ddd5&)
+
+**Halaman Edit Item**
+![Edit Item page](https://cdn.discordapp.com/attachments/1152952874037428306/1158955413186818158/image.png?ex=651e20d6&is=651ccf56&hm=6f801945b73300c5dc8d8e56d2fdb880b2df177f33fc77264c2e824f731d863d&)
+
 <hr>
 <details>
 <summary>Tugas 4 </summary>
