@@ -1,10 +1,17 @@
 # Inventory Master
 
-### Tugas 5 - Pemrograman Berbasis Platform
+### Tugas 6 - Pemrograman Berbasis Platform
 
 `Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
 
 > Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
+
+
+
+<details>
+<summary> Tugas 5 </summary>
+
+### Tugas 5 - Pemrograman Berbasis Platform
 
 ## Implementasi CSS pada Web Application
 - ## Menambahkan *library* yang dibutuhkan
@@ -303,15 +310,13 @@ Untuk Implementasi bonus pada aplikasi web saya, saya mengubah bagian class card
 **Halaman Edit Item**
 ![Edit Item page](https://cdn.discordapp.com/attachments/1152952874037428306/1158955413186818158/image.png?ex=651e20d6&is=651ccf56&hm=6f801945b73300c5dc8d8e56d2fdb880b2df177f33fc77264c2e824f731d863d&)
 
+</details>
 <hr>
+
 <details>
 <summary>Tugas 4 </summary>
 
 ### Tugas 4 - Pemrograman Berbasis Platform
-
-`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
-
-> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
 
 ## Mengimplementasikan fungsi *register*, *login*, dan *logout*
 - ## Membuat fungsi *register*
@@ -699,10 +704,6 @@ akun: daffaG
 
 ### Tugas 3 - Pemrograman Berbasis Platform
 
-`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
-<br><hr>
-> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
-
 ## Perubahan Implementasi Aplikasi
 - ## Mengatur Routing dari `main/` ke `/`
 Supaya lebih mengikuti aturan umum yang digunakan dalam pengaturan rute URL di *web application* ini, akan diubah routing yang sebelumnya dari *`main/`* ke *`/`* (root).
@@ -1030,12 +1031,7 @@ Lalu ditambahkan kode berikut pada template `main.html` untuk menampilkan berapa
 
 ### Tugas 2 - Pemrograman Berbasis Platform
 
-`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
-<br><hr>
-
 ## Link to App: [daffagrahito's Inventory Master](https://daffagrahitosinventorymaster.adaptable.app/main/)
-
-> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
 
 ## Cara Mengimplementasikan Aplikasi
 - ### Membuat project Django baru
