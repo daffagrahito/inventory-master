@@ -29,13 +29,10 @@ def show_main(request):
     return render(request, "main.html", context)
 
 def increase_amount(request, id):
-    if request.method == "POST" and request.is_ajax():
+    if request.method == "POST":
         item = get_object_or_404(Item, pk=id, user=request.user)
         item.amount += 1
         item.save()
-        # Return a JSON response to update the frontend
-        data = {'new_amount': item.amount}
-        return JsonResponse(data)
     return HttpResponseRedirect(reverse('main:show_main'))
 
 def decrease_amount(request, id):
