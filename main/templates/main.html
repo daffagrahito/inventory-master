@@ -25,85 +25,67 @@
         <p>Terdapat {{ total_items }} inventory yang telah dimasukkan</p>
 
         <div class="card main">
-            <div class="card-body d-flex flex-wrap">
-                {% for item in items %}
-                <div class="card mb-3 item-card {% if forloop.last %} last-item-card{% endif %}">
-                    <div class="card-header">
-                        {{ item.name }}
-                    </div>
-                    <div class="card-body">
-                        <p><b>Amount:</b> {{ item.amount }}</p> 
-                        <p><b>Date Added:</b> {{ item.date_added }}</p>
-                        <p><b>Category:</b> {{ item.category }}</p>
-                        <div class="btn-group" role="group">
-                            <form method="post" action="{% url 'main:increase_amount' item.id %}">
-                                {% csrf_token %}
-                                <button class="btn btn-success btn-sm mx-1" type="submit">+</button>
-                            </form>
-                            <form method="post" action="{% url 'main:decrease_amount' item.id %}">
-                                {% csrf_token %}
-                                <button class="btn btn-success btn-sm mx-1" type="submit">-</button>
-                            </form>
-                            <form method="post" action="{% url 'main:delete_item' item.id %}">
-                                {% csrf_token %}
-                                <button class="btn btn-danger btn-sm mx-1" type="submit">Delete</button>
-                            </form>
-                            <a href="{% url 'main:edit_item' item.pk %}">
-                                <button class="btn btn-primary btn-sm mx-1" type="submit">Edit</button>
-                            </a>
-                            <!-- Button to trigger the modal -->
-                            <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal{{ item.id }}">
-                                Show Description
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Modal -->
-                <div class="modal fade" id="descriptionModal{{ item.id }}" tabindex="-1" aria-labelledby="descriptionModalLabel{{ item.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="descriptionModalLabel{{ item.id }}">Description</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                {{ item.description }}
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+            <div class="card-body d-flex flex-wrap" id="item-list-container">
+                <!-- Moved content in the JavaScript with AJAX -->
             </div>
         </div>        
 
+        
+        <!-- Modals for AJAX -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Add New Item</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form" onsubmit="return false;">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="name" class="col-form-label">Name:</label>
+                                <input type="text" class="form-control" id="name" name="name"></input>
+                            </div>
+                            <div class="mb-3">
+                                <label for="amount" class="col-form-label">Amount:</label>
+                                <input type="number" class="form-control" id="amount" name="amount"></input>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="col-form-label">Description:</label>
+                                <textarea class="form-control" id="description" name="description"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="category" class="col-form-label">Category:</label>
+                                <input type="text" class="form-control" id="category" name="category"></input>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="button_add" data-bs-dismiss="modal">Add Item</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="mt-3">
-            <a href="{% url 'main:create_item' %}" class="btn new-item-button">
-                Add New Item
+            <a href="{% url 'main:create_item' %}">
+                <button class="btn btn-danger button-33" role="button">Add New Item</button>
             </a>
         </div>
-
-        <p></p>
+        <button type="button" class="btn btn-primary button-33" role="button" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Item by AJAX</button>
+        
         <h5>Sesi terakhir login: {{ last_login }}</h5>
     </div>
     </center>
 
     <style>
     html, body {
-        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang yang Anda inginkan */
+        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang atau properti CSS lainnya yang diinginkan */
         background-attachment: scroll; /* Ini mencegah latar belakang menggulir */
         min-height: 100vh;
         margin: 0;
     }
-
-    /* Atur warna tombol */
-    .new-item-button {
-        background-color: rgb(60, 60, 60);
-        color: white;
-    }   
 
     .main {
         max-width: 100%; /* Menggunakan lebar maksimum untuk tampilan desktop */
@@ -111,15 +93,155 @@
 
     /* Mengatur tampilan samping-sampingan menggunakan Flexbox */
     .item-card {
-        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang yang Anda inginkan */
+        background: linear-gradient(to bottom right, white, #8f94fb); /* Ganti dengan warna latar belakang atau properti CSS lainnya yang diinginkan */
         flex: 0 0 calc(50% - 20px); /* 50% lebar, dengan margin sebesar 10px */
         margin: 10px;
     }
 
     .last-item-card {
-        background: linear-gradient(to bottom right, #4e54c8, #8f94fb); /* Ganti dengan warna latar belakang atau properti CSS lainnya yang Anda inginkan */
+        background: linear-gradient(to bottom right, #4e54c8, #8f94fb); /* Ganti dengan warna latar belakang atau properti CSS lainnya yang diinginkan */
         color: white; /* Ganti dengan warna teks yang sesuai */
     }
+
+    /* CSS Button from internet*/
+    .button-33 {
+        background-color: #c2fbd7;
+        border-radius: 100px;
+        box-shadow: rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,rgba(44, 187, 99, .15) 0 1px 2px,rgba(44, 187, 99, .15) 0 2px 4px,rgba(44, 187, 99, .15) 0 4px 8px,rgba(44, 187, 99, .15) 0 8px 16px,rgba(44, 187, 99, .15) 0 16px 32px;
+        color: rgb(0, 0, 0);
+        cursor: pointer;
+        display: inline-block;
+        font-family: CerebriSans-Regular,-apple-system,system-ui,Roboto,sans-serif;
+        padding: 7px 20px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 250ms;
+        border: 0;
+        font-size: 16px;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        margin-top: 1%;
+        margin-bottom: 1%;
+    }
+
+    .button-33:hover {
+        box-shadow: rgba(44,187,99,.35) 0 -25px 18px -14px inset,rgba(44,187,99,.25) 0 1px 2px,rgba(44,187,99,.25) 0 2px 4px,rgba(44,187,99,.25) 0 4px 8px,rgba(44,187,99,.25) 0 8px 16px,rgba(44,187,99,.25) 0 16px 32px;
+        transform: scale(1.05) rotate(-1deg);
+    }
+
     </style>
+
+<script>
+    async function getItems() {
+        return fetch("{% url 'main:get_item_json' %}").then((res) => res.json());
+    }
+
+    async function refreshItem() {
+        const itemListContainer = document.getElementById("item-list-container");
+        const items = await getItems();
+        itemListContainer.innerHTML = "";
+
+        items.forEach((item, index) => {
+            // Create item card baru
+            const itemCard = document.createElement("div");
+            itemCard.className = "card mb-3 item-card";
+
+            if (index === items.length - 1) {
+                itemCard.classList.add("last-item-card");
+            }
+
+            // Populate konten item card
+            itemCard.innerHTML = `
+                <div class="card-header">${item.fields.name}</div>
+                <div class="card-body">
+                    <p><b>Amount:</b> ${item.fields.amount}</p>
+                    <p><b>Date Added:</b> ${item.fields.date_added}</p>
+                    <p><b>Category:</b> ${item.fields.category}</p>
+                    <div class="btn-group" role="group">
+                        <a> <button class="btn btn-success btn-sm mx-1" onclick="addAmount(${item.pk}); return false;"> + </button> </a>
+                        <a> <button class="btn btn-success btn-sm mx-1" onclick="decAmount(${item.pk}); return false;"> - </button> </a>
+                        <a> <button class="btn btn-danger btn-sm mx-1" onclick="deleteItem(${item.pk}); return false;"> Delete </button> </a>
+                        <a href="edit-item/${item.pk}"> <button class="btn btn-primary btn-sm mx-1"> Edit </button> </a>
+                        <!-- Button to trigger the description modal -->
+                        <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal${item.pk}">
+                            Show Description
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Append item card ke container
+            itemListContainer.appendChild(itemCard);
+
+            // Create modal
+            const modal = document.createElement("div");
+            modal.className = "modal fade";
+            modal.id = `descriptionModal${item.pk}`;
+            modal.tabIndex = -1;
+            modal.setAttribute("aria-labelledby", `descriptionModalLabel${item.pk}`);
+            modal.setAttribute("aria-hidden", "true");
+
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="descriptionModalLabel${item.pk}">Description</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${item.fields.description}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Append modal ke container
+            itemListContainer.appendChild(modal);
+        });
+    }
+
+    refreshItem(); // Call functionnya
+
+    function addItem() {
+        fetch("{% url 'main:create_ajax' %}", {
+            method: "POST",
+            body: new FormData(document.querySelector('#form'))
+        }).then(refreshItem)
+
+        document.getElementById("form").reset()
+        return false
+    }
+
+    document.getElementById("button_add").onclick = addItem
+
+    function deleteItem(itemId) {
+        fetch(`delete-item-ajax/${itemId}`, {
+            method: "DELETE",
+            
+        }).then(refreshItem)
+        return false
+    }
+
+    function addAmount(itemId) {
+        fetch(`increase-amount/${itemId}`, {
+            method: "GET",
+            
+        }).then(refreshItem)
+        return false
+    }
+
+    function decAmount(itemId) {
+        fetch(`decrease-amount/${itemId}`, {
+            method: "GET",
+            
+        }).then(refreshItem)
+        return false
+    }
+        
+</script>
 
 {% endblock content %}

@@ -1,7 +1,8 @@
 import datetime
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseNotFound, JsonResponse
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import logout
 from django.contrib.auth import authenticate, login
 from django.shortcuts import redirect, render, get_object_or_404
@@ -27,26 +28,18 @@ def show_main(request):
 
     return render(request, "main.html", context)
 
-def increase_amount(request, id):
-    if request.method == "POST":
-        item = get_object_or_404(Item, pk=id, user=request.user)
-        item.amount += 1
+def increase_amount(request, id):   # Wrong conditionals before, ini harusnya langsung GET
+    item = get_object_or_404(Item, pk=id, user=request.user)
+    item.amount += 1
+    item.save()
+    return HttpResponseRedirect(reverse('main:show_main'))
+
+def decrease_amount(request, id):   # Wrong conditionals before, ini harusnya langsung GET
+    item = get_object_or_404(Item, pk=id, user=request.user)
+    if item.amount > 1:
+        item.amount -= 1
         item.save()
-    return HttpResponseRedirect(reverse('main:show_main'))
-
-def decrease_amount(request, id):
-    if request.method == "POST":
-        item = get_object_or_404(Item, pk=id, user=request.user)
-        if item.amount > 1:
-            item.amount -= 1
-            item.save()
-        else:
-            item.delete()
-    return HttpResponseRedirect(reverse('main:show_main'))
-
-def delete_item(request, id):
-    if request.method == "POST":
-        item = get_object_or_404(Item, pk=id, user=request.user)
+    else:
         item.delete()
     return HttpResponseRedirect(reverse('main:show_main'))
 
@@ -54,19 +47,19 @@ def create_item(request):
     form = ItemForm(request.POST or None)
 
     if form.is_valid() and request.method == "POST":
-        product = form.save(commit=False)
-        product.user = request.user
-        product.save()
+        item = form.save(commit=False)
+        item.user = request.user
+        item.save()
         return HttpResponseRedirect(reverse('main:show_main'))
 
     context = {'form': form}
     return render(request, "create_item.html", context)
 
 def edit_item(request, id):
-    # Get product berdasarkan ID
+    # Get item berdasarkan ID
     item = Item.objects.get(pk = id)
 
-    # Set product sebagai instance dari form
+    # Set item sebagai instance dari form
     form = ItemForm(request.POST or None, instance=item)
 
     if form.is_valid() and request.method == "POST":
@@ -125,3 +118,32 @@ def logout_user(request):
     response = HttpResponseRedirect(reverse('main:login'))
     response.delete_cookie('last_login')
     return response
+
+def get_item_json(request):
+    item_data = Item.objects.filter(user=request.user)
+    return HttpResponse(serializers.serialize('json', item_data))
+
+@csrf_exempt
+def create_ajax(request):
+    if request.method == 'POST':
+        name = request.POST.get("name")
+        amount = request.POST.get("amount")
+        description = request.POST.get("description")
+        category = request.POST.get("category")
+        user = request.user
+
+        new_item = Item(name=name, amount=amount, description=description, user=user, category=category)
+        new_item.save()
+
+        return HttpResponse(b"CREATED", status=201)
+
+    return HttpResponseNotFound()
+
+@csrf_exempt
+def delete_item_ajax(request, id):
+    if request.method == 'DELETE':
+        item = get_object_or_404(Item, pk=id, user=request.user)
+        item.delete()
+        return HttpResponse(b"DELETED", status=201)
+
+    return HttpResponseNotFound()

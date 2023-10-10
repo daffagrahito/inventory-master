@@ -1,10 +1,364 @@
 # Inventory Master
 
-### Tugas 5 - Pemrograman Berbasis Platform
+### Tugas 6 - Pemrograman Berbasis Platform
 
 `Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
 
 > Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
+
+## Implementasi AJAX pada Web Application
+- ## Mengubah data item dan pengambilan task agar mendukung AJAX GET
+Untuk mengubah data item agar mendukung AJAX GET, perlu mengubah kode card sebelumnya yang terletak di dalam suatu `div` `HTML` yang setelah itu akan kita masukkan ke dalam `script` `javascript` nantinya. Perlu juga menambahkan `id` pada `div` yang berisi kode `HTML card` tersebut. Lalu juga kita perlu membuat fungsi untuk mendapatkan data *items* dalam bentuk `JSON` yang kita buat dalam `views.py`.
+
+Jadi dari sebelumnya seperti ini:
+```html
+...
+    <div class="card mb-3 item-card {% if forloop.last %} last-item-card{% endif %}">
+        <div class="card-header">
+            {{ item.name }}
+        </div>
+        <div class="card-body">
+            <p><b>Amount:</b> {{ item.amount }}</p> 
+            <p><b>Date Added:</b> {{ item.date_added }}</p>
+            <p><b>Category:</b> {{ item.category }}</p>
+            <div class="btn-group" role="group">
+                <form method="post" action="{% url 'main:increase_amount' item.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-success btn-sm mx-1" type="submit">+</button>
+                </form>
+                <form method="post" action="{% url 'main:decrease_amount' item.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-success btn-sm mx-1" type="submit">-</button>
+                </form>
+                <form method="post" action="{% url 'main:delete_item' item.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-danger btn-sm mx-1" type="submit">Delete</button>
+                </form>
+                <a href="{% url 'main:edit_item' item.pk %}">
+                    <button class="btn btn-primary btn-sm mx-1" type="submit">Edit</button>
+                </a>
+                <!-- Button to trigger the modal -->
+                <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal{{ item.id }}">
+                    Show Description
+                </button>
+            </div>
+        </div>
+    </div>
+...
+```
+
+Menjadi seperti ini:
+```html
+...
+    <div class="card main">
+        <div class="card-body d-flex flex-wrap" id="item-list-container"> <!-- Added id -->
+            <!-- Moved content in the JavaScript with AJAX -->
+        </div>
+    </div>
+...
+```
+
+Lalu untuk fungsi mendapatkan *items*nya dalam bentuk `JSON` (`get_item_json`):
+```python
+def get_item_json(request):
+    item_data = Item.objects.filter(user=request.user)
+    return HttpResponse(serializers.serialize('json', item_data))
+```
+Tidak lupa kita juga perlu menambahkan path URL ke dalam `urls.py`:
+```py
+# Sesuaikan importnya
+from main.views import get_item_json
+...
+path('get-item-json/', get_item_json, name='get_item_json'),
+```
+Setelah itu kita bisa menambahkan AJAX function ke dalam `main.html` untuk mendapatkan items kita tersebut serta juga sebuah function untuk *refresh* item (yang nanti akan dipakai saat AJAX POST juga) dan menampilkan item dalam tampilan yang benar:
+```js
+    async function getItems() {
+        return fetch("{% url 'main:get_item_json' %}").then((res) => res.json());
+    }
+
+    async function refreshItem() {
+        const itemListContainer = document.getElementById("item-list-container");
+        const items = await getItems();
+        itemListContainer.innerHTML = "";
+
+        items.forEach((item, index) => {
+            // Create item card baru
+            const itemCard = document.createElement("div");
+            itemCard.className = "card mb-3 item-card";
+
+            if (index === items.length - 1) {
+                itemCard.classList.add("last-item-card");
+            }
+
+            // Populate konten item card
+            itemCard.innerHTML = `
+                <div class="card-header">${item.fields.name}</div>
+                <div class="card-body">
+                    <p><b>Amount:</b> ${item.fields.amount}</p>
+                    <p><b>Date Added:</b> ${item.fields.date_added}</p>
+                    <p><b>Category:</b> ${item.fields.category}</p>
+                    <div class="btn-group" role="group">
+                        <a> <button class="btn btn-success btn-sm mx-1" onclick="addAmount(${item.pk}); return false;"> + </button> </a>
+                        <a> <button class="btn btn-success btn-sm mx-1" onclick="decAmount(${item.pk}); return false;"> - </button> </a>
+                        <a> <button class="btn btn-danger btn-sm mx-1" onclick="deleteItem(${item.pk}); return false;"> Delete </button> </a>
+                        <a href="edit-item/${item.pk}"> <button class="btn btn-primary btn-sm mx-1"> Edit </button> </a>
+                        <!-- Button to trigger the description modal -->
+                        <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal${item.pk}">
+                            Show Description
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Append item card ke container
+            itemListContainer.appendChild(itemCard);
+
+            // Create modal
+            const modal = document.createElement("div");
+            modal.className = "modal fade";
+            modal.id = `descriptionModal${item.pk}`;
+            modal.tabIndex = -1;
+            modal.setAttribute("aria-labelledby", `descriptionModalLabel${item.pk}`);
+            modal.setAttribute("aria-hidden", "true");
+
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="descriptionModalLabel${item.pk}">Description</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${item.fields.description}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Append modal ke container
+            itemListContainer.appendChild(modal);
+        });
+    }
+
+    refreshItem(); // Call functionnya
+```
+
+- ## Mengimplementasikan AJAX POST untuk menambahkan item
+Kita bisa membuat sebuah modals sebagai input form yang nantinya akan kita ambil input dari user berdasarkan isi forms tersebut. Untuk melakukannya bisa menambahkan ini pada main.html:
+```html
+    ...
+    <!-- Modals for AJAX -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Add New Item</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form" onsubmit="return false;">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="name" class="col-form-label">Name:</label>
+                            <input type="text" class="form-control" id="name" name="name"></input>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="col-form-label">Amount:</label>
+                            <input type="number" class="form-control" id="amount" name="amount"></input>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="col-form-label">Description:</label>
+                            <textarea class="form-control" id="description" name="description"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="col-form-label">Category:</label>
+                            <input type="text" class="form-control" id="category" name="category"></input>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="button_add" data-bs-dismiss="modal">Add Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="btn btn-primary button-33" role="button" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Item by AJAX</button>
+    ...
+```
+Lalu kita juga perlu membuat fungsi pada `views.py` dan juga nantinya pada section `script` akan dibuat fungsi `JavaScript` agar kita bisa menerima data formnya dengan benar. Berikut ini code untuk fungsi yang mendapatkan data dari form inputan user dan mengubahnya menjadi object `Item`:
+```py
+@csrf_exempt
+def create_ajax(request):
+    if request.method == 'POST':
+        name = request.POST.get("name")
+        amount = request.POST.get("amount")
+        description = request.POST.get("description")
+        category = request.POST.get("category")
+        user = request.user
+
+        new_item = Item(name=name, amount=amount, description=description, user=user, category=category)
+        new_item.save()
+
+        return HttpResponse(b"CREATED", status=201)
+
+    return HttpResponseNotFound()
+```
+Lalu juga perlu menambahkan path URL yang benar pada `urls.py` untuk fungsi ini:
+```py
+# Sesuaikan importnya
+from main.views import get_item_json
+...
+path('create-ajax/', create_ajax, name='create_ajax'),
+...
+```
+Nah, setelah itu kita perlu membuat fungsi JavaScript sebagai penginisiasi *request* sehingga memicu fungsi `create_ajax()`. Berikut ini adalah kode fungsinya:
+```js
+function addItem() {
+    fetch("{% url 'main:create_ajax' %}", {
+        method: "POST",
+        body: new FormData(document.querySelector('#form'))
+    }).then(refreshItem)
+
+    document.getElementById("form").reset()
+    return false
+}
+document.getElementById("button_add").onclick = addItem
+```
+Jadi fungsi tersebut ditambahkan ke button yang kita tambahkan id `"button_add"` yaitu pada button `Add New Item by AJAX` sehingga saat button tersebut ditekan maka akan menjalankan fungsi `addItem()` dan membuat `FormData` baru, objek `FormData` dapat digunakan untuk mengirimkan data form tersebut ke server lalu akan dibuat dalam bentuk object `Item`. Setelah itu akan di-*refresh* data itemnya berdasarkan `.then(refreshItem)` dan formnya akan dikosongkan kembali berdasarkan `document.getElementById("form").reset()`.
+
+- ## Menjalankan perintah `collectstatic`
+Pertama-tama pastikan di `settings.py` terdapat setting yang tepat agar output files dapat di petakan ke direktori yang benar
+```py
+...
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/4.2/howto/static-files/
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATIC_URL = 'static/'
+...
+```
+Dengan menjalankan `python manage.py collectstatic` maka akan terbuat sebuah direktori baru dalam direktori root bernama `staticfiles` karena ini yang kita petakan pada `STATIC_ROOT`. Jadi perintah ini menggabungkan semua file statis dari berbagai aplikasi dan direktori ke dalam satu folder khusus yang siap untuk disajikan oleh server web.
+
+## Perbedaan antara *asynchronous programming* dengan *synchronous programming*
+Singkatnya adalah bahwa *synchronous programming* berjalan secara berurutan dan memblokir aplikasi saat tugas memerlukan waktu lama, sementara *asynchronous programming* memungkinkan tugas untuk dieksekusi secara bersamaan dan menjaga responsivitas aplikasi.
+
+## Maksud dari Paradigma *event-driven programming* dan contoh implementasinya pada kode ini 
+Paradigma event-driven programming adalah paradigma pemrograman di mana aplikasi merespons peristiwa atau kejadian yang terjadi secara asinkron, seperti tindakan pengguna atau perubahan dalam sistem, daripada mengeksekusi tugas secara berurutan. Dalam paradigma ini, aplikasi memantau peristiwa dan menanggapi mereka saat mereka terjadi. Contoh penerapan *event-driven programming* dalam kode saya adalah seperti yang ada di dalam kode `scripts` di `main/templates/main.html`:
+```javascript
+...
+function addItem() {
+    fetch("{% url 'main:create_ajax' %}", {
+        method: "POST",
+        body: new FormData(document.querySelector('#form'))
+    }).then(refreshItem)
+
+    document.getElementById("form").reset()
+    return false
+}
+
+document.getElementById("button_add").onclick = addItem
+```
+
+Pada bagian ini terdapat penggunaan event handler (onclick) untuk menangani peristiwa klik pada elemen HTML dengan ID "button_add". Dengan menggunakan *event-driven programming* seperti ini, aplikasi dapat merespons tindakan *user* (klik tombol "button_add" dalam hal ini) secara asinkron dan efisien.
+
+## Penerapan *asynchronous programming* pada AJAX
+AJAX adalah teknik yang digunakan untuk mengirim atau menerima data dari server web tanpa harus memuat ulang seluruh halaman web. Dalam konteks AJAX, *asynchronous programming* memungkinkan kita untuk melakukan permintaan ke server dan menerima respons tanpa menghentikan eksekusi program JavaScript utama atau menghentikan interaksi pengguna. Ini sangat penting karena jika permintaan ke server dilakukan secara synchronous (menunggu respons server), maka aplikasi web akan menjadi tidak responsif dan tampak lambat. Asynchronous programming pada AJAX dapat diimplementasikan dengan menggunakan `XMLHttpRequest` object, `Fetch API`, atau bahkan library eksternal seperti `jQuery`.
+
+- XMLHttpRequest adalah objek yang sudah lama digunakan untuk membuat HTTP *request* *asynchronous* di JavaScript. Untuk menggunakannya, kita harus membuat object `XMLHttpRequest`, menetapkan fungsi `callback` untuk menangani respons dari server, membuka permintaan dengan metode, URL, dan mode *asynchronous*, dan mengirim permintaan ke server. Contoh kodenya adalah sebagai berikut:
+```js
+var xhr = new XMLHttpRequest();
+
+// Menetapkan callback untuk menangani respons dari server
+xhr.onreadystatechange = function () {
+  if (xhr.readyState === 4 && xhr.status === 200) {
+    // Mengolah respons dari server
+    var response = xhr.responseText;
+    console.log(response);
+  }
+};
+
+// Membuka permintaan HTTP GET ke URL yang ditentukan
+xhr.open("GET", "https://example.com/api/data", true);
+
+// Mengirim permintaan ke server
+xhr.send();
+```
+
+- Fetch API adalah cara yang lebih modern dan mudah untuk melakukan HTTP *request* *asynchronous*. Untuk menggunakannya, kita hanya perlu memanggil fungsi `fetch` dengan URL sebagai argumen, dan menggunakan metode `.then()` dan `.catch()` untuk menangani respons atau kesalahan dari server. Kurang lebih contoh kodenya seperti di contoh program di function AddItem atau seperti dibawah ini:
+```js
+fetch("https://example.com/api/data")
+  .then(function (response) {
+    return response.text(); // Mengambil respons sebagai teks
+  })
+  .then(function (data) {
+    console.log(data); // Mengolah data yang diterima dari server
+  })
+  .catch(function (error) {
+    console.error("Terjadi kesalahan: " + error);
+  });
+```
+
+## Perbandingan penerapan AJAX yang dilakukan dengan menggunakan Fetch API dengan library jQuery
+| Fitur / Aspek       | Fetch API                                       | jQuery                               |
+|---------------------|-------------------------------------------------|--------------------------------------|
+| Ketersediaan        | Tersedia di semua modern browser                | Memerlukan library jQuery            |
+| Pemanggilan AJAX    | Menggunakan `fetch()` API                       | Menggunakan `$.ajax()` atau `$.get()` |
+| Konfigurasi Request | Memerlukan lebih banyak konfigurasi kode        | Konfigurasi yang lebih sederhana dengan chaining |
+| Tampilan Kode       | Lebih ringkas dan mudah dibaca                  | Kadang-kadang lebih panjang dan kompleks |
+| Handling Promise    | Menggunakan `then()` untuk menangani respons    | Menggunakan `.done()`, `.fail()`, dan `.always()` |
+| Penanganan Kesalahan| Menggunakan `catch()` untuk menangani kesalahan| Menggunakan `.fail()` untuk kesalahan  |
+| Manipulasi DOM      | Memerlukan kode tambahan untuk memanipulasi DOM  | Bisa menggunakan callback dalam fungsi `success` |
+| Kustomisasi AJAX    | Mudah dikustomisasi dengan opsi seperti metode, header, dll. | Banyak opsi konfigurasi yang tersedia |
+| Ukuran Library      | Lebih ringan karena merupakan bagian dari browser | Memerlukan library jQuery yang lebih besar |
+| Kecepatan Eksekusi  | Terkadang lebih cepat karena lebih langsung ke browser | Bisa sedikit lebih lambat karena abstraksi jQuery |
+
+
+## Implementasi Bonus
+Pada implementasi bonusnya kali ini kita diminta untuk mengimplementasikan fungsionalitas hapus dengan AJAX DELETE. Untuk mengimplementasikannya, maka kita perlu menambahkan suatu function lagi di scriptnya, seperti ini:
+```js
+function deleteItem(itemId) {
+        fetch(`delete-item-ajax/${itemId}`, {
+            method: "DELETE",
+            
+        }).then(refreshItem)
+        return false
+    }
+```
+
+Disini sebenarnya saya juga mengubah function `delete_item()` saya sebelumnya dan menyesuaikan saja dengan bentuk function AJAX sehingga saya ubah menjadi `delete_item_ajax()`. Lalu untuk memastikan akan berjalan saat di klik saya juga harus mengubah kode buttonsnya dan memastikan seperti ini:
+```js
+// Populate konten item card
+itemCard.innerHTML = `
+    <div class="card-header">${item.fields.name}</div>
+    <div class="card-body">
+        <p><b>Amount:</b> ${item.fields.amount}</p>
+        <p><b>Date Added:</b> ${item.fields.date_added}</p>
+        <p><b>Category:</b> ${item.fields.category}</p>
+        <div class="btn-group" role="group">
+            <a> <button class="btn btn-success btn-sm mx-1" onclick="addAmount(${item.pk}); return false;"> + </button> </a>
+            <a> <button class="btn btn-success btn-sm mx-1" onclick="decAmount(${item.pk}); return false;"> - </button> </a>
+            <a> <button class="btn btn-danger btn-sm mx-1" onclick="deleteItem(${item.pk}); return false;"> Delete </button> </a>
+            <a href="edit-item/${item.pk}"> <button class="btn btn-primary btn-sm mx-1"> Edit </button> </a>
+            <!-- Button to trigger the description modal -->
+            <button class="btn btn-info btn-sm mx-1" data-bs-toggle="modal" data-bs-target="#descriptionModal${item.pk}">
+                Show Description
+            </button>
+        </div>
+    </div>
+`;
+```
+Disini saya menambahkan tag `onclick` agar saat ditekan buttonnya akan mengarah ke function yang sesuai. (P.S. Disini saya juga menambahkan function untuk `increase_amount` dan `decrease_amount` sebagai tambahan saja)
+
+<details>
+<summary> Tugas 5 </summary>
+
+### Tugas 5 - Pemrograman Berbasis Platform
 
 ## Implementasi CSS pada Web Application
 - ## Menambahkan *library* yang dibutuhkan
@@ -303,15 +657,13 @@ Untuk Implementasi bonus pada aplikasi web saya, saya mengubah bagian class card
 **Halaman Edit Item**
 ![Edit Item page](https://cdn.discordapp.com/attachments/1152952874037428306/1158955413186818158/image.png?ex=651e20d6&is=651ccf56&hm=6f801945b73300c5dc8d8e56d2fdb880b2df177f33fc77264c2e824f731d863d&)
 
+</details>
 <hr>
+
 <details>
 <summary>Tugas 4 </summary>
 
 ### Tugas 4 - Pemrograman Berbasis Platform
-
-`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
-
-> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
 
 ## Mengimplementasikan fungsi *register*, *login*, dan *logout*
 - ## Membuat fungsi *register*
@@ -699,10 +1051,6 @@ akun: daffaG
 
 ### Tugas 3 - Pemrograman Berbasis Platform
 
-`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
-<br><hr>
-> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
-
 ## Perubahan Implementasi Aplikasi
 - ## Mengatur Routing dari `main/` ke `/`
 Supaya lebih mengikuti aturan umum yang digunakan dalam pengaturan rute URL di *web application* ini, akan diubah routing yang sebelumnya dari *`main/`* ke *`/`* (root).
@@ -1030,12 +1378,7 @@ Lalu ditambahkan kode berikut pada template `main.html` untuk menampilkan berapa
 
 ### Tugas 2 - Pemrograman Berbasis Platform
 
-`Muhammad Daffa Grahito Triharsanto - 2206820075 - PBP A`
-<br><hr>
-
 ## Link to App: [daffagrahito's Inventory Master](https://daffagrahitosinventorymaster.adaptable.app/main/)
-
-> Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
 
 ## Cara Mengimplementasikan Aplikasi
 - ### Membuat project Django baru
