@@ -238,12 +238,12 @@ Pertama-tama pastikan di `settings.py` terdapat setting yang tepat agar output f
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 STATIC_URL = 'static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 ...
 ```
-Dengan menjalankan `python manage.py collectstatic` maka akan terbuat sebuah direktori baru dalam direktori root bernama `staticfiles` karena ini yang kita petakan pada `STATIC_ROOT`. Jadi perintah ini menggabungkan semua file statis dari berbagai aplikasi dan direktori ke dalam satu folder khusus yang siap untuk disajikan oleh server web.
+Dengan menjalankan `python manage.py collectstatic` maka akan terbuat sebuah direktori baru dalam direktori root bernama `static` karena ini yang kita petakan pada `STATIC_ROOT`. Jadi perintah ini menggabungkan semua file statis dari berbagai aplikasi dan direktori ke dalam satu folder khusus yang siap untuk disajikan oleh server web.
 
 ## Perbedaan antara *asynchronous programming* dengan *synchronous programming*
 Singkatnya adalah bahwa *synchronous programming* berjalan secara berurutan dan memblokir aplikasi saat tugas memerlukan waktu lama, sementara *asynchronous programming* memungkinkan tugas untuk dieksekusi secara bersamaan dan menjaga responsivitas aplikasi.
