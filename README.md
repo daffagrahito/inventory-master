@@ -6,6 +6,8 @@
 
 > Inventory Master adalah sebuah inventori personal dan merupakan *master tool* untuk mengelola inventori-inventori lainnya.
 
+## Link to the App: [Here!](http://muhammad-daffa23-tugas.pbp.cs.ui.ac.id)
+
 ## Implementasi AJAX pada Web Application
 - ## Mengubah data item dan pengambilan task agar mendukung AJAX GET
 Untuk mengubah data item agar mendukung AJAX GET, perlu mengubah kode card sebelumnya yang terletak di dalam suatu `div` `HTML` yang setelah itu akan kita masukkan ke dalam `script` `javascript` nantinya. Perlu juga menambahkan `id` pada `div` yang berisi kode `HTML card` tersebut. Lalu juga kita perlu membuat fungsi untuk mendapatkan data *items* dalam bentuk `JSON` yang kita buat dalam `views.py`.
