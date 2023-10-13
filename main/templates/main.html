@@ -5,6 +5,7 @@
         <div class="container-fluid">
         <a class="navbar-brand">{{ app_name }}</a>
         <form class="d-flex" role="logout">
+            <span class="navbar-text ml-3" style="margin-right: 15px;"> Welcome {{ name }} from {{ class }} </span>
             <a href="{% url 'main:logout' %}">
                 <button class="btn btn-outline-success" type="button">Logout</button>
             </a>
@@ -14,15 +15,10 @@
 
     <center>
     <div class="container mt-4">
-        <h4>An inventory to manage inventories</h4>
+        <h2>An inventory to manage inventories</h2>
         <hr>
 
-        <p><b>Name:</b> {{ name }}</p>
-        <p><b>Class:</b> {{ class }}</p>
-
-        <hr>
-
-        <p>Terdapat {{ total_items }} inventory yang telah dimasukkan</p>
+        <p>Terdapat <span id="total-items"> {{ total_items }} </span> inventory yang telah dimasukkan</p>
 
         <div class="card main">
             <div class="card-body d-flex flex-wrap" id="item-list-container">
@@ -201,7 +197,10 @@
 
             // Append modal ke container
             itemListContainer.appendChild(modal);
+            
         });
+        const itemsLength = items.length;
+        document.getElementById("total-items").textContent = itemsLength;
     }
 
     refreshItem(); // Call functionnya
