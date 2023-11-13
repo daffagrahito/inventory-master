@@ -473,7 +473,6 @@ Pada halaman daftar inventori, saya mengimplementasikan *Card Bootstrap* untuk m
     ... 
 ```
 Untuk kode lebih lengkapnya dapat dilihat dalam file `main.html` dalam folder `main/templates`.
-
 - ## Kustomisasi halaman *Add New Item* dan *Edit Item*
 Pada halaman *Add New Item* dan *Edit Item*, ide design yang saya pakai cukup mirip dan simpel. Form yang di *render* sebagai tabel dimasukkan dalam *Card* dan ditambahkan sedikit CSS untuk warna background dan buttons. Berikut adalah salah satu kode saya dan selengkapnya dapat dilihat dalam file `create_item.html` dan `edit_item.html` dalam folder `main/templates`
 
