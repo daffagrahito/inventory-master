@@ -18,7 +18,7 @@ def login(request):
                 "username": user.username,
                 "status": True,
                 "message": "Login sukses!",
-                "id": user.id,
+                "id": user.id,  # Untuk filtering item di Flutter app nya
             }, status=200)
         else:
             return JsonResponse({
